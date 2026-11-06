@@ -18,15 +18,21 @@ El perfil `local` usa H2 persistente en `data/` para probar; el perfil normal us
 - Salud: http://localhost:8080/actuator/health
 - API: http://localhost:8080/api/v1
 
-## Ejecutar con PostgreSQL y Docker
+## Ejecutar desde IntelliJ IDEA
 
-Copia `.env.example` como `.env`, configura contraseñas propias y ejecuta:
+1. Abre la carpeta del proyecto como proyecto Maven y carga sus dependencias.
+2. Configura Project SDK y Maven Runner con JDK 21.
+3. Crea una configuración Spring Boot para `com.noctiva.noxway.NoxwayApplication`.
+4. En Active profiles escribe `local` (o agrega `--spring.profiles.active=local` en Program arguments).
+5. Ejecuta y abre http://localhost:8080/swagger-ui.html.
 
-```bash
-docker compose up --build
-```
+El perfil local permite probar sin instalar PostgreSQL. Para verificar los flujos sigue [la guía de comprobación](docs/COMPROBAR-BACKEND.md).
 
-La base conserva sus datos en un volumen. No se publica el puerto de PostgreSQL. Para ejecutar con PostgreSQL externo, configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD` y ejecuta `./mvnw spring-boot:run`. Flyway aplica las migraciones; Hibernate valida el esquema. No uses el perfil `local` para el despliegue PostgreSQL.
+## Ejecutar con PostgreSQL instalado
+
+Crea una base `noxway` y un usuario con permiso para crear esquemas. En las variables de entorno de la configuración de ejecución establece `DB_URL=jdbc:postgresql://localhost:5432/noxway`, `DB_USERNAME` y `DB_PASSWORD` con tus valores. Ejecuta sin el perfil `local`. Flyway aplica las migraciones; Hibernate valida el esquema.
+
+`.env.example` sirve de referencia de variables: Spring Boot no carga un archivo `.env` automáticamente. Configura las variables en IntelliJ o en tu terminal.
 
 ## Bounded contexts
 
@@ -75,7 +81,6 @@ Consulta `docs/API.md` para recorrer los endpoints y `docs/noxway.postman_collec
 
 - Recuperación por correo: configura `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, propiedades de autenticación/TLS y `NOXWAY_MAIL_FROM`. Sin SMTP, recuperación devuelve 503. El token expira en 30 minutos y se invalida tras uso; también se revocan sesiones al cambiar contraseña.
 - WhatsApp/SMS: configura `NOXWAY_DELIVERY_WEBHOOK_URL` (HTTPS) y `NOXWAY_DELIVERY_WEBHOOK_SECRET`. El puente recibe JSON `{channel,recipient,message,eventId,priority}` y debe encargarse de la integración real del proveedor y respetar la clave de idempotencia. Un 2xx confirma aceptación por el puente, no lectura por el destinatario. Las fallas quedan registradas y se reintentan explícitamente desde el panel administrativo.
-- SMTP/Docker: agrega esas variables al servicio `api` o utiliza un archivo override privado de Compose; no están habilitadas por defecto.
 - Producción necesita PostgreSQL persistente, HTTPS en el proxy de entrada, variables privadas y `CORS_ORIGINS` con los dominios concretos del frontend. El límite de solicitudes de autenticación es por proceso/IP; un despliegue con varias instancias debe añadir control en el gateway.
 - Los envíos son de tipo outbox con entrega al menos una vez; el proveedor debe deduplicar por evento. SMTP no garantiza ausencia absoluta de duplicados si el proceso termina después de enviar y antes de confirmar la transacción.
 
