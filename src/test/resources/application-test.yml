@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:h2:mem:noxway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    driver-class-name: ${TEST_DB_DRIVER:org.h2.Driver}
+    username: ${TEST_DB_USERNAME:sa}
+    password: ${TEST_DB_PASSWORD:}
+noxway:
+  auth-requests-per-minute: 1000
+  bootstrap-admin-email: admin@noxway.test
+  bootstrap-admin-password: TestingAdmin!2026
