@@ -97,3 +97,10 @@ Base: `/api/v1`. Todos los endpoints requieren Bearer salvo registro, login, rec
 400: formato o campos inválidos. 401: token ausente/inválido/expirado. 403: acceso a recurso ajeno o rol insuficiente. 404: recurso inexistente o no publicado. 409: duplicado o actualización concurrente. 422: regla de negocio incumplida. 429: límite de autenticación. 503: proveedor de correo no configurado o no disponible.
 
 Los filtros `page` y `size` usan página base cero, tamaño 1–100. Las respuestas paginadas incluyen `items`, `page`, `size`, `total`. Consulta los esquemas de cuerpo en Swagger.
+
+## Invitaciones: contratos diferentes
+
+- `POST /api/v1/trust-links`: `{ "contactEmail": "contact@example.com" }` (contacto de confianza).
+- `POST /api/v1/subscriptions/{id}/members`: `{ "workerEmail": "worker@example.com" }` (trabajador miembro de una suscripción familiar).
+
+El segundo flujo requiere una suscripción familiar activa. Una suscripción `PENDING_PAYMENT` no permite invitar miembros; primero debe activarse por conciliación administrativa de un pago offline. No se deben intercambiar los nombres de campo. Swagger usa esquemas independientes para ambos contratos.

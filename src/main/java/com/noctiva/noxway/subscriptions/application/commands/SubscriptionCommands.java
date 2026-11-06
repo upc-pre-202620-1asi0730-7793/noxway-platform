@@ -8,7 +8,7 @@ public final class SubscriptionCommands {
 
   public record Payment(@NotBlank @Size(max = 150) String reference) {}
 
-  public record Invite(@Email @NotBlank String workerEmail) {}
+  public record InviteSubscriptionMember(@Email @NotBlank String workerEmail) {}
 
   public record Referral(@NotBlank String code) {}
 

@@ -56,7 +56,7 @@ public class IdentityController {
 
   @PostMapping("/trust-links")
   @ResponseStatus(HttpStatus.CREATED)
-  public TrustLink invite(@Valid @RequestBody IdentityCommands.Invite c) {
+  public TrustLink invite(@Valid @RequestBody IdentityCommands.InviteTrustedContact c) {
     return service.invite(c.contactEmail());
   }
 

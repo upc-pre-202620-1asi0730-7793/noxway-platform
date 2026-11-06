@@ -409,7 +409,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Invite"
+                "$ref": "#/components/schemas/InviteTrustedContact"
               }
             }
           },
@@ -626,7 +626,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Invite"
+                "$ref": "#/components/schemas/InviteSubscriptionMember"
               }
             }
           },
@@ -2980,7 +2980,7 @@
           }
         }
       },
-      "Invite": {
+      "InviteTrustedContact": {
         "type": "object",
         "properties": {
           "contactEmail": {
@@ -3109,6 +3109,19 @@
             "format": "int64"
           }
         }
+      },
+      "InviteSubscriptionMember": {
+        "type": "object",
+        "properties": {
+          "workerEmail": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "workerEmail"
+        ]
       },
       "SubscriptionMember": {
         "type": "object",

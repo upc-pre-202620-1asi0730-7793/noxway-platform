@@ -25,7 +25,7 @@ public final class IdentityCommands {
       String shiftEnd,
       @NotBlank String timeZone) {}
 
-  public record Invite(@Email @NotBlank String contactEmail) {}
+  public record InviteTrustedContact(@Email @NotBlank String contactEmail) {}
 
   public record Preference(
       @Pattern(regexp = "EMAIL|WHATSAPP|SMS|IN_APP") @NotNull String channel,

@@ -16,7 +16,7 @@ macOS/Linux:
 ./mvnw clean verify
 ```
 
-El resultado esperado es BUILD SUCCESS y 15 pruebas sin fallos ni errores. Incluyen reglas de dominio y llamadas HTTP mediante MockMvc con Spring, Flyway y repositorios reales sobre H2. No equivalen a probar PostgreSQL ni el frontend.
+El resultado esperado es BUILD SUCCESS y 16 pruebas sin fallos ni errores. Incluyen reglas de dominio y llamadas HTTP mediante MockMvc con Spring, Flyway y repositorios reales sobre H2. No equivalen a probar PostgreSQL ni el frontend.
 
 ## 2. Arranque
 

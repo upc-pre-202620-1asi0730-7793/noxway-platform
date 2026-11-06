@@ -356,12 +356,19 @@ class ApiIntegrationTest {
         admin,
         Map.of("reference", "TEST-" + UUID.randomUUID()),
         200);
+    var doc = call("GET", "/v3/api-docs", null, null, 200);
+    String schemaRef =
+        doc.at(
+                "/paths/~1api~1v1~1subscriptions~1{id}~1members/post/requestBody/content/application~1json/schema/$ref")
+            .asText();
+    String documentedEmailField = doc.at(schemaRef.substring(1)).path("required").get(0).asText();
+    assertEquals("workerEmail", documentedEmailField);
     String invitation =
         call(
                 "POST",
                 "/api/v1/subscriptions/" + id + "/members",
                 owner.token(),
-                Map.of("workerEmail", member.email()),
+                Map.of(documentedEmailField, member.email()),
                 201)
             .get("id")
             .asText();
@@ -408,6 +415,30 @@ class ApiIntegrationTest {
         204);
     call("GET", "/api/v1/accounts/me", w.token(), null, 401);
     call("POST", "/api/v1/auth/password-reset", null, Map.of("email", w.email()), 503);
+  }
+
+  @Test
+  void invitationSchemasMatchTheirRequestBodies() throws Exception {
+    var doc = call("GET", "/v3/api-docs", null, null, 200);
+    String familyRef =
+        doc.at(
+                "/paths/~1api~1v1~1subscriptions~1{id}~1members/post/requestBody/content/application~1json/schema/$ref")
+            .asText();
+    String trustRef =
+        doc.at(
+                "/paths/~1api~1v1~1trust-links/post/requestBody/content/application~1json/schema/$ref")
+            .asText();
+    assertFalse(familyRef.isBlank());
+    assertFalse(trustRef.isBlank());
+    assertNotEquals(familyRef, trustRef, "Different invitation contracts must not share a schema");
+    var family = doc.at(familyRef.substring(1));
+    var trust = doc.at(trustRef.substring(1));
+    assertTrue(family.path("properties").has("workerEmail"));
+    assertFalse(family.path("properties").has("contactEmail"));
+    assertTrue(trust.path("properties").has("contactEmail"));
+    assertFalse(trust.path("properties").has("workerEmail"));
+    assertTrue(family.path("required").toString().contains("workerEmail"));
+    assertTrue(trust.path("required").toString().contains("contactEmail"));
   }
 
   @Test

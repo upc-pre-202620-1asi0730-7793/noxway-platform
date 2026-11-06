@@ -108,7 +108,7 @@ public class SubscriptionController {
   @PostMapping("/subscriptions/{id}/members")
   @ResponseStatus(HttpStatus.CREATED)
   public SubscriptionMember invite(
-      @PathVariable UUID id, @Valid @RequestBody SubscriptionCommands.Invite c) {
+      @PathVariable UUID id, @Valid @RequestBody SubscriptionCommands.InviteSubscriptionMember c) {
     return service.invite(id, c.workerEmail());
   }
 
