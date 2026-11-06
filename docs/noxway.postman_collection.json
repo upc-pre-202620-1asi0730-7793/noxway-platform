@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "Noxway API — Sprint 3",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "commuteId",
+      "value": ""
+    },
+    {
+      "key": "trustLinkId",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Register worker",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"worker@example.com\",\n  \"password\": \"A-long-password!2026\",\n  \"fullName\": \"Yam Cano\",\n  \"phone\": \"987654321\",\n  \"role\": \"WORKER\",\n  \"shiftType\": \"NIGHT\",\n  \"shiftStart\": \"22:00\",\n  \"shiftEnd\": \"06:00\",\n  \"timeZone\": \"America/Lima\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"worker@example.com\",\n  \"password\": \"A-long-password!2026\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) pm.collectionVariables.set(\"token\", pm.response.json().accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "My account",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/accounts/me",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Invite registered contact",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/trust-links",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"contactEmail\": \"contact@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "List trust links",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/trust-links",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Accept as contact",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/trust-links/{{trustLinkId}}/accept",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "List commutes",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/commutes",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Confirm arrival",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/commutes/{{commuteId}}/arrival",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Available services",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/community/services?openOnly=true",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rest summary",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/wellness/summary?timeZone=America/Lima",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Plans",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/plans",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Alerts",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/alerts",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    }
+  ]
+}
