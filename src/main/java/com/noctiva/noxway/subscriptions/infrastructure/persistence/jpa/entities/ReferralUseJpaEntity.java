@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "referral_uses", schema = "subscription_schema")
+@Table(name = "referral_uses")
 public class ReferralUseJpaEntity {
   @Id
   @Column(name = "id", nullable = false)

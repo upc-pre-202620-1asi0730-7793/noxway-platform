@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sleep_goals", schema = "wellness_schema")
+@Table(name = "sleep_goals")
 public class SleepGoalJpaEntity {
   @Id
   @Column(name = "id", nullable = false)

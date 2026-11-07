@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "benefit_claims", schema = "subscription_schema")
+@Table(name = "benefit_claims")
 public class BenefitClaimJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -17,7 +17,7 @@ public class BenefitClaimJpaEntity {
   @Column(name = "benefit_id", nullable = false)
   public UUID benefitId;
 
-  @Column(name = "code", nullable = false)
+  @Column(name = "code", nullable = false, length = 100)
   public String code;
 
   @Column(name = "created_at", nullable = false)

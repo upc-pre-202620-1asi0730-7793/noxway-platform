@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscription_members", schema = "subscription_schema")
+@Table(name = "subscription_members")
 public class SubscriptionMemberJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -17,7 +17,7 @@ public class SubscriptionMemberJpaEntity {
   @Column(name = "worker_id", nullable = false)
   public UUID workerId;
 
-  @Column(name = "status", nullable = false)
+  @Column(name = "status", nullable = false, length = 32)
   public String status;
 
   @Column(name = "created_at", nullable = false)

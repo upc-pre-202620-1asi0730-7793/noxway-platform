@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "auth_sessions", schema = "users_network_schema")
+@Table(name = "auth_sessions")
 public class AuthSessionJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -14,7 +14,7 @@ public class AuthSessionJpaEntity {
   @Column(name = "account_id", nullable = false)
   public UUID accountId;
 
-  @Column(name = "token_hash", nullable = false, unique = true)
+  @Column(name = "token_hash", nullable = false, unique = true, length = 64)
   public String tokenHash;
 
   @Column(name = "expires_at", nullable = false)

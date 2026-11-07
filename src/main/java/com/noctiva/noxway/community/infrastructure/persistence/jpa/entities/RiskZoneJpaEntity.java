@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "risk_zones", schema = "community_data_schema")
+@Table(name = "risk_zones")
 public class RiskZoneJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -14,10 +14,10 @@ public class RiskZoneJpaEntity {
   @Column(name = "reported_by", nullable = false)
   public UUID reportedBy;
 
-  @Column(name = "description", nullable = false)
+  @Column(name = "description", nullable = false, length = 1500)
   public String description;
 
-  @Column(name = "risk_level", nullable = false)
+  @Column(name = "risk_level", nullable = false, length = 16)
   public String riskLevel;
 
   @Column(name = "latitude", nullable = false)
@@ -26,7 +26,7 @@ public class RiskZoneJpaEntity {
   @Column(name = "longitude", nullable = false)
   public double longitude;
 
-  @Column(name = "status", nullable = false)
+  @Column(name = "status", nullable = false, length = 32)
   public String status;
 
   @Column(name = "created_at", nullable = false)

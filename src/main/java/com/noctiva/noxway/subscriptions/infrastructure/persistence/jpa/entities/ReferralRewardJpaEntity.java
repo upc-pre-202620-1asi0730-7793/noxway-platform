@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "referral_rewards", schema = "subscription_schema")
+@Table(name = "referral_rewards")
 public class ReferralRewardJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -20,7 +20,7 @@ public class ReferralRewardJpaEntity {
   @Column(name = "days", nullable = false)
   public int days;
 
-  @Column(name = "status", nullable = false)
+  @Column(name = "status", nullable = false, length = 32)
   public String status;
 
   @Column(name = "created_at", nullable = false)

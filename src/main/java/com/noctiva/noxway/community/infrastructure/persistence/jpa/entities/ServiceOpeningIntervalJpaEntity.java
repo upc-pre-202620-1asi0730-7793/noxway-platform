@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "service_opening_intervals", schema = "community_data_schema")
+@Table(name = "service_opening_intervals")
 public class ServiceOpeningIntervalJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -17,10 +17,10 @@ public class ServiceOpeningIntervalJpaEntity {
   @Column(name = "day_of_week", nullable = false)
   public int dayOfWeek;
 
-  @Column(name = "opens_at", nullable = false)
+  @Column(name = "opens_at", nullable = false, length = 5)
   public String opensAt;
 
-  @Column(name = "closes_at", nullable = false)
+  @Column(name = "closes_at", nullable = false, length = 5)
   public String closesAt;
 
   @Column(name = "closes_next_day", nullable = false)

@@ -6,16 +6,16 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "plans", schema = "subscription_schema")
+@Table(name = "plans")
 public class PlanJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
   public UUID id;
 
-  @Column(name = "code", nullable = false, unique = true)
+  @Column(name = "code", nullable = false, unique = true, length = 100)
   public String code;
 
-  @Column(name = "name", nullable = false)
+  @Column(name = "name", nullable = false, length = 150)
   public String name;
 
   @Column(name = "monthly_price", nullable = false, precision = 12, scale = 2)

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "safety_incidents", schema = "commute_incident_schema")
+@Table(name = "safety_incidents")
 public class SafetyIncidentJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -17,13 +17,13 @@ public class SafetyIncidentJpaEntity {
   @Column(name = "worker_id", nullable = false)
   public UUID workerId;
 
-  @Column(name = "type", nullable = false)
+  @Column(name = "type", nullable = false, length = 32)
   public String type;
 
-  @Column(name = "description", nullable = false)
+  @Column(name = "description", nullable = false, length = 1500)
   public String description;
 
-  @Column(name = "status", nullable = false)
+  @Column(name = "status", nullable = false, length = 32)
   public String status;
 
   @Column(name = "reported_at", nullable = false)

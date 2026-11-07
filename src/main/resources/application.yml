@@ -2,7 +2,7 @@ spring:
   application:
     name: noxway-platform
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/noxway}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/noxway?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true}
     username: ${DB_USERNAME:noxway}
     password: ${DB_PASSWORD:}
   jpa:
@@ -13,6 +13,10 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        type:
+          preferred_uuid_jdbc_type: BINARY
+          preferred_instant_jdbc_type: TIMESTAMP
+          preferred_boolean_jdbc_type: BOOLEAN
   jackson:
     deserialization:
       fail-on-unknown-properties: true

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "route_ratings", schema = "community_data_schema")
+@Table(name = "route_ratings")
 public class RouteRatingJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -20,7 +20,7 @@ public class RouteRatingJpaEntity {
   @Column(name = "score", nullable = false)
   public int score;
 
-  @Column(name = "comments", nullable = false)
+  @Column(name = "comments", nullable = false, length = 1000)
   public String comments;
 
   @Column(name = "created_at", nullable = false)

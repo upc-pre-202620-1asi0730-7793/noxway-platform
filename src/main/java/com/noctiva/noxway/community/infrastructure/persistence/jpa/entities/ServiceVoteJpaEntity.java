@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "service_votes", schema = "community_data_schema")
+@Table(name = "service_votes")
 public class ServiceVoteJpaEntity {
   @Id
   @Column(name = "id", nullable = false)

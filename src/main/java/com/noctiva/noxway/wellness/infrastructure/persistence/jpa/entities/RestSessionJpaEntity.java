@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "rest_sessions", schema = "wellness_schema")
+@Table(name = "rest_sessions")
 public class RestSessionJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -23,7 +23,7 @@ public class RestSessionJpaEntity {
   @Column(name = "quality", nullable = false)
   public int quality;
 
-  @Column(name = "notes", nullable = false)
+  @Column(name = "notes", nullable = false, length = 1000)
   public String notes;
 
   @Column(name = "created_at", nullable = false)

@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "telemetry_pings", schema = "commute_incident_schema")
+@Table(name = "telemetry_pings")
 public class TelemetryPingJpaEntity {
   @Id
   @Column(name = "id", nullable = false)

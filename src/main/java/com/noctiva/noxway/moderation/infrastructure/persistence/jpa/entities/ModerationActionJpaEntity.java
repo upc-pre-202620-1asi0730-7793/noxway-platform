@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "moderation_actions", schema = "moderation_schema")
+@Table(name = "moderation_actions")
 public class ModerationActionJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -17,10 +17,10 @@ public class ModerationActionJpaEntity {
   @Column(name = "moderator_id", nullable = false)
   public UUID moderatorId;
 
-  @Column(name = "decision", nullable = false)
+  @Column(name = "decision", nullable = false, length = 32)
   public String decision;
 
-  @Column(name = "notes", nullable = false)
+  @Column(name = "notes", nullable = false, length = 1000)
   public String notes;
 
   @Column(name = "created_at", nullable = false)

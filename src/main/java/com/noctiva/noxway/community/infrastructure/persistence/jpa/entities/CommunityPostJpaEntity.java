@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "community_posts", schema = "community_data_schema")
+@Table(name = "community_posts")
 public class CommunityPostJpaEntity {
   @Id
   @Column(name = "id", nullable = false)
@@ -14,13 +14,13 @@ public class CommunityPostJpaEntity {
   @Column(name = "author_id", nullable = false)
   public UUID authorId;
 
-  @Column(name = "title", nullable = false)
+  @Column(name = "title", nullable = false, length = 150)
   public String title;
 
-  @Column(name = "content", nullable = false)
+  @Column(name = "content", nullable = false, length = 2000)
   public String content;
 
-  @Column(name = "district", nullable = false)
+  @Column(name = "district", nullable = false, length = 100)
   public String district;
 
   @Column(name = "created_at", nullable = false)
