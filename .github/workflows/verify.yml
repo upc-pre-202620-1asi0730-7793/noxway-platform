@@ -6,15 +6,16 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:16
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_DB: noxway_test
-          POSTGRES_USER: noxway_test
-          POSTGRES_PASSWORD: ci-only-password
-        ports: ["5432:5432"]
+          MYSQL_DATABASE: noxway_test
+          MYSQL_USER: noxway_test
+          MYSQL_PASSWORD: ci-only-password
+          MYSQL_ROOT_PASSWORD: ci-root-password
+        ports: ["3306:3306"]
         options: >-
-          --health-cmd "pg_isready -U noxway_test -d noxway_test"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pci-root-password"
           --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v4
@@ -26,10 +27,10 @@ jobs:
       - run: chmod +x mvnw
       - name: Test local profile and domain rules
         run: ./mvnw -B verify
-      - name: Test PostgreSQL migrations and API
+      - name: Test MySQL migrations and API
         run: ./mvnw -B verify
         env:
-          TEST_DB_URL: jdbc:postgresql://localhost:5432/noxway_test
-          TEST_DB_DRIVER: org.postgresql.Driver
+          TEST_DB_URL: jdbc:mysql://localhost:3306/noxway_test?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&sslMode=DISABLED
+          TEST_DB_DRIVER: com.mysql.cj.jdbc.Driver
           TEST_DB_USERNAME: noxway_test
           TEST_DB_PASSWORD: ci-only-password

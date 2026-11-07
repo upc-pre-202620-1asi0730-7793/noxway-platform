@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 class ApiIntegrationTest {
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
+  @Autowired javax.sql.DataSource dataSource;
 
   record User(String id, String email, String token) {}
 
@@ -439,6 +440,49 @@ class ApiIntegrationTest {
     assertFalse(trust.path("properties").has("workerEmail"));
     assertTrue(family.path("required").toString().contains("workerEmail"));
     assertTrue(trust.path("required").toString().contains("contactEmail"));
+  }
+
+  @Test
+  void persistencePreservesUnicodeAndUsesBinaryUuidAndUtcTimestamp() throws Exception {
+    var worker = user("WORKER");
+    String origin = "🌙".repeat(250);
+    String destination = "á".repeat(500);
+    var start = Instant.now().minusSeconds(10).truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+    var created =
+        call(
+            "POST",
+            "/api/v1/commutes",
+            worker.token(),
+            Map.of(
+                "origin",
+                origin,
+                "destination",
+                destination,
+                "transport",
+                "BUS",
+                "startTime",
+                start.toString(),
+                "estimatedArrivalTime",
+                start.plusSeconds(3600).toString(),
+                "toleranceMinutes",
+                10),
+            201);
+    var stored =
+        call("GET", "/api/v1/commutes/" + created.get("id").asText(), worker.token(), null, 200);
+    assertEquals(origin, stored.get("origin").asText());
+    assertEquals(destination, stored.get("destination").asText());
+    assertEquals(start, Instant.parse(stored.get("startTime").asText()));
+    try (var connection = dataSource.getConnection();
+        var statement =
+            connection.prepareStatement("SELECT id, created_at FROM accounts WHERE email = ?")) {
+      statement.setString(1, worker.email());
+      try (var result = statement.executeQuery()) {
+        assertTrue(result.next());
+        assertEquals(16, result.getBytes("id").length);
+        assertEquals(java.sql.Types.BINARY, result.getMetaData().getColumnType(1));
+        assertEquals(java.sql.Types.TIMESTAMP, result.getMetaData().getColumnType(2));
+      }
+    }
   }
 
   @Test
