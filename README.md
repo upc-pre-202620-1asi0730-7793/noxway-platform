@@ -1,8 +1,8 @@
 # Noxway Platform
 
-Backend REST de Noctiva para trabajadores de turnos diurnos/nocturnos y sus contactos de confianza. Java 21, Spring Boot 3.5.7, Maven, PostgreSQL, Flyway y OpenAPI. Sigue el reporte de Noxway y los patrones de dominio independiente, repositorios, adaptadores y mappers de los ejemplos del curso.
+Backend REST de Noctiva para trabajadores de turnos diurnos/nocturnos y sus contactos de confianza. Java 21, Spring Boot 3.5.7, Maven, MySQL, Flyway y OpenAPI. Sigue el reporte de Noxway y los patrones de dominio independiente, repositorios, adaptadores y mappers de los ejemplos del curso.
 
-## Ejecutar sin instalar PostgreSQL
+## Ejecutar sin instalar MySQL
 
 Requisitos: JDK 21 y acceso a Maven Central para descargar dependencias.
 
@@ -11,7 +11,7 @@ Requisitos: JDK 21 y acceso a Maven Central para descargar dependencias.
 ```
 
 En Windows: `mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local`.
-El perfil `local` usa H2 persistente en `data/` para probar; el perfil normal usa PostgreSQL. No hay usuario ni contraseña de administrador por defecto. Si necesitas aprobar servicios o conciliar pagos, configura `ADMIN_EMAIL` y `ADMIN_PASSWORD` (12 caracteres mínimo, máximo 72 bytes UTF-8) **antes de iniciar**. El administrador solo se crea si no existe, nunca se eleva una cuenta pública ni se sobrescribe su contraseña al reiniciar.
+El perfil `local` usa H2 persistente en `data/noxway-mysql-preview` para probar; el perfil normal usa MySQL. No hay usuario ni contraseña de administrador por defecto. Si necesitas aprobar servicios o conciliar pagos, configura `ADMIN_EMAIL` y `ADMIN_PASSWORD` (12 caracteres mínimo, máximo 72 bytes UTF-8) **antes de iniciar**. El administrador solo se crea si no existe, nunca se eleva una cuenta pública ni se sobrescribe su contraseña al reiniciar.
 
 - Swagger: http://localhost:8080/swagger-ui.html
 - OpenAPI: http://localhost:8080/v3/api-docs
@@ -26,28 +26,35 @@ El perfil `local` usa H2 persistente en `data/` para probar; el perfil normal us
 4. En Active profiles escribe `local` (o agrega `--spring.profiles.active=local` en Program arguments).
 5. Ejecuta y abre http://localhost:8080/swagger-ui.html.
 
-El perfil local permite probar sin instalar PostgreSQL. Para verificar los flujos sigue [la guía de comprobación](docs/COMPROBAR-BACKEND.md).
+El perfil local permite probar sin instalar MySQL. Para verificar los flujos sigue [la guía de comprobación](docs/COMPROBAR-BACKEND.md).
 
-## Ejecutar con PostgreSQL instalado
+## Ejecutar con MySQL Server y MySQL Workbench
 
-Crea una base `noxway` y un usuario con permiso para crear esquemas. En las variables de entorno de la configuración de ejecución establece `DB_URL=jdbc:postgresql://localhost:5432/noxway`, `DB_USERNAME` y `DB_PASSWORD` con tus valores. Ejecuta sin el perfil `local`. Flyway aplica las migraciones; Hibernate valida el esquema.
+Instala MySQL Server 8.0.16 o posterior (8.4 LTS recomendado) y MySQL Workbench. Workbench administra el servidor; no reemplaza MySQL Server. No se necesita Docker ni pgAdmin.
 
-`.env.example` sirve de referencia de variables: Spring Boot no carga un archivo `.env` automáticamente. Configura las variables en IntelliJ o en tu terminal.
+1. Abre tu conexión local en Workbench y ejecuta `docs/sql/create-database.sql` para crear `noxway` con `utf8mb4`.
+2. Configura en IntelliJ o PowerShell `DB_URL`, `DB_USERNAME` y `DB_PASSWORD` con tu conexión real. Puerto local habitual: 3306. El usuario necesita permisos DDL y DML sobre `noxway` para las migraciones.
+3. Ejecuta sin el perfil `local`: el perfil predeterminado usa MySQL. Flyway crea tablas, índices y restricciones; Hibernate valida el resultado.
+4. En Workbench actualiza Schemas → noxway → Tables.
+
+Guía paso a paso para Windows: [MYSQL-WORKBENCH.md](docs/MYSQL-WORKBENCH.md).
+
+`.env.example` sirve de referencia; Spring Boot no carga `.env` automáticamente. Las contraseñas se configuran fuera del código.
 
 ## Bounded contexts
 
-| Contexto | Paquete | Esquema PostgreSQL |
+| Contexto | Paquete Java | Tablas principales en `noxway` |
 |---|---|---|
-| Identity & Network Management | identity | users_network_schema |
-| Safe Commute & Incident Management | commuting | commute_incident_schema |
-| Community Intelligence | community | community_data_schema |
-| Sleep Health & Wellness | wellness | wellness_schema |
-| Subscriptions & Collective Benefits | subscriptions | subscription_schema |
-| Moderation & Governance | moderation | moderation_schema |
+| Identity & Network Management | identity | accounts, trust_links, auth_sessions |
+| Safe Commute & Incident Management | commuting | commutes, telemetry_pings, safety_incidents, alerts |
+| Community Intelligence | community | service_points, service_opening_intervals, community_posts |
+| Sleep Health & Wellness | wellness | rest_sessions, sleep_goals |
+| Subscriptions & Collective Benefits | subscriptions | plans, subscriptions, subscription_members, payment_transactions |
+| Moderation & Governance | moderation | community_reports, moderation_actions |
 
 `shared` contiene infraestructura común; no es un contexto de negocio. Cada contexto tiene `domain/model/aggregates`, `domain/repositories`, `application`, `infrastructure/persistence/jpa/{entities,repositories,mappers,adapters}` e `interfaces/rest`. Los comandos se encuentran en `application/commands`. Los DTO de entrada usan Bean Validation. Las reglas temporales están en objetos de dominio; los servicios de aplicación orquestan transacciones y permisos. No se copian errores de compilación ni nombres de paquetes incorrectos de los ejemplos.
 
-Los agregados de dominio no dependen de JPA. Las relaciones entre contextos conservan UUID lógicos y se validan mediante interfaces ACL; no hay asociaciones JPA cruzadas. Dentro de cada esquema hay restricciones, claves foráneas y unicidad. Las entidades usan control de versión optimista; operaciones por trabajador adquieren un bloqueo transaccional para proteger invariantes como un único trayecto activo. No se implementan microservicios: es un monolito modular.
+Los agregados de dominio no dependen de JPA. Las relaciones entre contextos conservan UUID lógicos y se validan mediante interfaces ACL; no hay asociaciones JPA cruzadas. En la base `noxway` hay restricciones, claves foráneas dentro de cada contexto y unicidad. Los seis contextos siguen separados en Java; no se crean seis bases MySQL. Las entidades usan control de versión optimista; operaciones por trabajador adquieren un bloqueo transaccional para proteger invariantes como un único trayecto activo. No se implementan microservicios: es un monolito modular.
 
 ## Funciones implementadas
 
@@ -81,7 +88,7 @@ Consulta `docs/API.md` para recorrer los endpoints y `docs/noxway.postman_collec
 
 - Recuperación por correo: configura `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, propiedades de autenticación/TLS y `NOXWAY_MAIL_FROM`. Sin SMTP, recuperación devuelve 503. El token expira en 30 minutos y se invalida tras uso; también se revocan sesiones al cambiar contraseña.
 - WhatsApp/SMS: configura `NOXWAY_DELIVERY_WEBHOOK_URL` (HTTPS) y `NOXWAY_DELIVERY_WEBHOOK_SECRET`. El puente recibe JSON `{channel,recipient,message,eventId,priority}` y debe encargarse de la integración real del proveedor y respetar la clave de idempotencia. Un 2xx confirma aceptación por el puente, no lectura por el destinatario. Las fallas quedan registradas y se reintentan explícitamente desde el panel administrativo.
-- Producción necesita PostgreSQL persistente, HTTPS en el proxy de entrada, variables privadas y `CORS_ORIGINS` con los dominios concretos del frontend. El límite de solicitudes de autenticación es por proceso/IP; un despliegue con varias instancias debe añadir control en el gateway.
+- Producción necesita MySQL persistente, HTTPS en el proxy de entrada, variables privadas y `CORS_ORIGINS` con los dominios concretos del frontend. El límite de solicitudes de autenticación es por proceso/IP; un despliegue con varias instancias debe añadir control en el gateway.
 - Los envíos son de tipo outbox con entrega al menos una vez; el proveedor debe deduplicar por evento. SMTP no garantiza ausencia absoluta de duplicados si el proceso termina después de enviar y antes de confirmar la transacción.
 
 ## Pruebas
@@ -90,9 +97,9 @@ Consulta `docs/API.md` para recorrer los endpoints y `docs/noxway.postman_collec
 ./mvnw clean verify
 ```
 
-Las pruebas de integración arrancan Spring, Flyway y JPA contra H2 en modo PostgreSQL, sin simular repositorios. Comprueban consentimiento, aislamiento de cuentas, revocación, autenticación, horarios, descanso, pagos, grupos, referidos y documentación OpenAPI. Las pruebas de dominio cubren el cambio de semana, intervalos nocturnos y cruces de fecha. SMTP se sustituye por un capturador **solo en la prueba de recuperación**, sin enviar correo real.
+Las pruebas de integración arrancan Spring, Flyway y JPA contra H2 en modo MySQL, sin simular repositorios. Comprueban consentimiento, aislamiento de cuentas, revocación, autenticación, horarios, descanso, pagos, grupos, referidos y documentación OpenAPI. Las pruebas de dominio cubren el cambio de semana, intervalos nocturnos y cruces de fecha. SMTP se sustituye por un capturador **solo en la prueba de recuperación**, sin enviar correo real.
 
-El workflow también está preparado para ejecutar las mismas pruebas contra PostgreSQL 16. El resultado de esa ejecución en GitHub depende de publicar el repositorio y ejecutar Actions; no se presenta como ejecutado desde este entorno.
+La suite de 17 pruebas pasó tanto en H2 como en MySQL 8.0.46 real. Se comprobó además arranque HTTP y persistencia tras reiniciar el JAR. El workflow también está preparado para ejecutar las mismas pruebas contra MySQL 8.4. El resultado de esa ejecución en GitHub depende de publicar el repositorio y ejecutar Actions; no se presenta como ejecutado desde este entorno.
 
 ## Integración con el frontend
 
@@ -100,6 +107,10 @@ Este backend introduce contratos versionados y autenticados. El Angular anterior
 
 ## Alcance y límites
 
-No se incluye envío real sin proveedores, cargo de tarjetas, integración contractual con serenazgo/seguros, geocodificación/ruteo externo, ni consultas PostGIS. El filtro de radio usa distancia geodésica en aplicación. Los listados ofrecen paginación de respuesta, pero algunos cargan registros en memoria: antes de operar con grandes volúmenes deben convertirse en consultas paginadas del repositorio. Las ventanas de turno y las metas se configuran por usuario; no implican recomendaciones médicas.
+No se incluye envío real sin proveedores, cargo de tarjetas, integración contractual con serenazgo/seguros, geocodificación/ruteo externo, ni índices o consultas espaciales nativas. El filtro de radio usa distancia geodésica en aplicación. Los listados ofrecen paginación de respuesta, pero algunos cargan registros en memoria: antes de operar con grandes volúmenes deben convertirse en consultas paginadas del repositorio. Las ventanas de turno y las metas se configuran por usuario; no implican recomendaciones médicas.
 
 No hay datos ficticios presentados como evidencia de despliegue ni aportes atribuidos a otros integrantes. El paquete contiene código y pruebas; las evidencias del Sprint deben recogerse cuando se ejecute y despliegue con las cuentas del equipo.
+
+## Cambio desde la versión PostgreSQL/H2 anterior
+
+Esta versión utiliza migraciones para una base MySQL nueva. No ejecutes estas migraciones sobre una base ya gestionada por la versión PostgreSQL. La carpeta H2 anterior `data/noxway` no se toca: el perfil local nuevo usa `data/noxway-mysql-preview`. Las cuentas y datos de PostgreSQL o H2 no se importan automáticamente a MySQL. Conserva tus copias; para migrar datos existentes se necesita una exportación/importación independiente. Los UUID de la API siguen siendo cadenas; se guardan como BINARY(16). Los instantes se almacenan como DATETIME(6) en UTC, conservando la zona horaria de negocio en sus columnas.

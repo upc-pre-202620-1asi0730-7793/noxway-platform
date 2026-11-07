@@ -16,7 +16,7 @@ macOS/Linux:
 ./mvnw clean verify
 ```
 
-El resultado esperado es BUILD SUCCESS y 16 pruebas sin fallos ni errores. Incluyen reglas de dominio y llamadas HTTP mediante MockMvc con Spring, Flyway y repositorios reales sobre H2. No equivalen a probar PostgreSQL ni el frontend.
+El resultado esperado es BUILD SUCCESS y 17 pruebas sin fallos ni errores. Incluyen reglas de dominio y llamadas HTTP mediante MockMvc con Spring, Flyway y repositorios reales sobre H2. No equivalen a probar MySQL ni el frontend.
 
 ## 2. Arranque
 
@@ -40,8 +40,8 @@ Las rutas completas y flujos están en API.md. También puedes importar noxway.p
 
 Detén y vuelve a iniciar la aplicación local desde la misma carpeta; los datos H2 se guardan en data/. Confirma que puedes iniciar sesión y consultar los registros anteriores. No subas esa carpeta al repositorio.
 
-Antes de la entrega: repetir los flujos con PostgreSQL, conectar el frontend a /api/v1, probar ambos juntos, desplegar y recoger evidencias reales. Correo/SMS/WhatsApp requieren proveedores configurados; no se consideran enviados por el simple hecho de crear una alerta.
+Antes de la entrega: repetir los flujos con MySQL, conectar el frontend a /api/v1, probar ambos juntos, desplegar y recoger evidencias reales. Correo/SMS/WhatsApp requieren proveedores configurados; no se consideran enviados por el simple hecho de crear una alerta.
 
 ## Referencia de los ejemplos del curso
 
-Se usaron los proyectos catch-up y learning-center compartidos como referencia de capas, dominio independiente de persistencia, repositorios, adaptadores, entidades JPA, mappers y controladores REST. Los bounded contexts y reglas se adaptaron al reporte de Noxway. No es una copia exacta: se añadieron seguridad, migraciones Flyway, pruebas y configuración H2/PostgreSQL; las versiones y decisiones técnicas tampoco son idénticas a todos los ejemplos. Los comandos de aplicación se agrupan por contexto y los servicios de aplicación reúnen consultas y comandos, en vez de reproducir cada clase del ejemplo.
+Se usaron los proyectos catch-up y learning-center compartidos como referencia de capas, dominio independiente de persistencia, repositorios, adaptadores, entidades JPA, mappers y controladores REST. Los bounded contexts y reglas se adaptaron al reporte de Noxway. No es una copia exacta: se añadieron seguridad, migraciones Flyway, pruebas y configuración H2/MySQL; las versiones y decisiones técnicas tampoco son idénticas a todos los ejemplos. Los comandos de aplicación se agrupan por contexto y los servicios de aplicación reúnen consultas y comandos, en vez de reproducir cada clase del ejemplo.
