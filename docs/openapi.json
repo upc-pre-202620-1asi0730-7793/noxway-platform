@@ -2,32 +2,92 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Noxway Platform API",
-    "description": "Day and night shift workers and trusted contacts. External delivery and payments require providers.",
-    "version": "1.0.0"
+    "description": "REST API for night/day shift worker safe commuting, community intelligence, wellness logging, subscriptions, moderation, and trusted companion monitoring.",
+    "contact": {
+      "name": "Noctiva / Noxway Engineering"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "version": "v1"
   },
   "servers": [
     {
-      "url": "http://localhost:18080",
+      "url": "http://localhost:8086",
       "description": "Generated server url"
     }
   ],
-  "security": [
+  "tags": [
     {
-      "bearerAuth": []
+      "name": "Trust Links",
+      "description": "Trusted contact invitations, consent acceptance, and revocation"
+    },
+    {
+      "name": "Wellness",
+      "description": "Rest session logging, sleep goals, and 7-day fatigue tracking"
+    },
+    {
+      "name": "Authentication (IAM Structured)",
+      "description": "Structured IAM contracts pending full implementation"
+    },
+    {
+      "name": "Moderation",
+      "description": "Community safety & service report review queue and decision audit log"
+    },
+    {
+      "name": "Subscriptions & Benefits",
+      "description": "Plans, subscriptions, offline payments, crew sharing, benefits, and referrals"
+    },
+    {
+      "name": "Accounts & Profiles",
+      "description": "Worker & Trusted Contact profiles and notification preferences"
+    },
+    {
+      "name": "Commutes & Companion Tracking",
+      "description": "Night commute lifecycle, telemetry pings, safety incidents, and companion live view"
+    },
+    {
+      "name": "Community & Safety Map",
+      "description": "24/7 services directory, risk zones, trust voting, route ratings, and feed"
+    },
+    {
+      "name": "Alert Deliveries",
+      "description": "External notification delivery queue and retry controls"
     }
   ],
   "paths": {
     "/api/v1/wellness/goal": {
+      "get": {
+        "tags": [
+          "Wellness"
+        ],
+        "summary": "Get active daily sleep goal for current worker",
+        "operationId": "getGoal",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "tags": [
-          "wellness-controller"
+          "Wellness"
         ],
-        "operationId": "goal",
+        "summary": "Update worker daily sleep goal target",
+        "operationId": "updateGoal",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Goal"
+                "$ref": "#/components/schemas/UpdateSleepGoalResource"
               }
             }
           },
@@ -39,7 +99,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SleepGoal"
+                  "type": "object"
                 }
               }
             }
@@ -50,9 +110,10 @@
     "/api/v1/community/services/{id}": {
       "get": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "view",
+        "summary": "View service point details and real-time open status",
+        "operationId": "viewService",
         "parameters": [
           {
             "name": "id",
@@ -79,7 +140,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceResource"
+                  "type": "object"
                 }
               }
             }
@@ -88,9 +149,10 @@
       },
       "put": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "update",
+        "summary": "Update a submitted service point and re-queue for review",
+        "operationId": "updateService",
         "parameters": [
           {
             "name": "id",
@@ -106,7 +168,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Service"
+                "$ref": "#/components/schemas/SubmitServicePointResource"
               }
             }
           },
@@ -118,7 +180,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceResource"
+                  "type": "object"
                 }
               }
             }
@@ -129,9 +191,10 @@
     "/api/v1/community/services/{id}/vote": {
       "put": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "vote",
+        "summary": "Upvote (+1), downvote (-1), or retract (0) a vote on an approved service point",
+        "operationId": "voteService",
         "parameters": [
           {
             "name": "id",
@@ -147,7 +210,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Vote"
+                "$ref": "#/components/schemas/VoteServicePointResource"
               }
             }
           },
@@ -159,7 +222,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceVote"
+                  "type": "object"
                 }
               }
             }
@@ -170,8 +233,9 @@
     "/api/v1/accounts/me": {
       "get": {
         "tags": [
-          "identity-controller"
+          "Accounts & Profiles"
         ],
+        "summary": "Get active profile for current actor",
         "operationId": "me",
         "responses": {
           "200": {
@@ -179,7 +243,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountResult"
+                  "type": "object"
                 }
               }
             }
@@ -188,14 +252,15 @@
       },
       "put": {
         "tags": [
-          "identity-controller"
+          "Accounts & Profiles"
         ],
-        "operationId": "profile",
+        "summary": "Update active profile details and shift schedule",
+        "operationId": "updateMe",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Profile"
+                "$ref": "#/components/schemas/UpdateProfileResource"
               }
             }
           },
@@ -207,33 +272,10 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountResult"
+                  "type": "object"
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/v1/accounts/me/password": {
-      "put": {
-        "tags": [
-          "identity-controller"
-        ],
-        "operationId": "password",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Password"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
           }
         }
       }
@@ -241,19 +283,17 @@
     "/api/v1/accounts/me/notification-preferences": {
       "get": {
         "tags": [
-          "identity-controller"
+          "Accounts & Profiles"
         ],
-        "operationId": "preferences",
+        "summary": "List notification channel preferences for active profile",
+        "operationId": "notificationPreferences",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationPreference"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -262,14 +302,15 @@
       },
       "put": {
         "tags": [
-          "identity-controller"
+          "Accounts & Profiles"
         ],
-        "operationId": "preference",
+        "summary": "Update notification preference channel and priority window",
+        "operationId": "updateNotificationPreference",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Preference"
+                "$ref": "#/components/schemas/UpdateNotificationPreferenceResource"
               }
             }
           },
@@ -281,7 +322,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/NotificationPreference"
+                  "type": "object"
                 }
               }
             }
@@ -292,9 +333,10 @@
     "/api/v1/wellness/rest-sessions": {
       "get": {
         "tags": [
-          "wellness-controller"
+          "Wellness"
         ],
-        "operationId": "list",
+        "summary": "List recorded rest sessions for current worker",
+        "operationId": "restSessions",
         "parameters": [
           {
             "name": "page",
@@ -323,7 +365,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesRestSession"
+                  "type": "object"
                 }
               }
             }
@@ -332,26 +374,27 @@
       },
       "post": {
         "tags": [
-          "wellness-controller"
+          "Wellness"
         ],
-        "operationId": "rest",
+        "summary": "Log a new rest or sleep session",
+        "operationId": "logRestSession",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Rest"
+                "$ref": "#/components/schemas/LogRestSessionResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RestSession"
+                  "type": "object"
                 }
               }
             }
@@ -362,38 +405,17 @@
     "/api/v1/trust-links": {
       "get": {
         "tags": [
-          "identity-controller"
+          "Trust Links"
         ],
-        "operationId": "links",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
+        "summary": "List trust links involving the current actor (enriched with contact and worker names)",
+        "operationId": "list",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesTrustLink"
+                  "type": "object"
                 }
               }
             }
@@ -402,26 +424,27 @@
       },
       "post": {
         "tags": [
-          "identity-controller"
+          "Trust Links"
         ],
-        "operationId": "invite",
+        "summary": "Invite a trusted contact by email",
+        "operationId": "create",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InviteTrustedContact"
+                "$ref": "#/components/schemas/CreateTrustLinkResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrustLink"
+                  "type": "object"
                 }
               }
             }
@@ -432,8 +455,9 @@
     "/api/v1/trust-links/{id}/reject": {
       "post": {
         "tags": [
-          "identity-controller"
+          "Trust Links"
         ],
+        "summary": "Reject a pending trust link invitation",
         "operationId": "reject",
         "parameters": [
           {
@@ -452,7 +476,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrustLink"
+                  "type": "object"
                 }
               }
             }
@@ -463,8 +487,9 @@
     "/api/v1/trust-links/{id}/accept": {
       "post": {
         "tags": [
-          "identity-controller"
+          "Trust Links"
         ],
+        "summary": "Accept a pending trust link invitation as the invited trusted contact",
         "operationId": "accept",
         "parameters": [
           {
@@ -483,7 +508,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrustLink"
+                  "type": "object"
                 }
               }
             }
@@ -494,8 +519,9 @@
     "/api/v1/subscriptions": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List worker subscriptions (owned and accepted family memberships)",
         "operationId": "mine",
         "responses": {
           "200": {
@@ -503,10 +529,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Subscription"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -515,26 +538,27 @@
       },
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "Subscribe worker to a plan",
         "operationId": "subscribe",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Subscribe"
+                "$ref": "#/components/schemas/SubscribeResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Subscription"
+                  "type": "object"
                 }
               }
             }
@@ -545,9 +569,10 @@
     "/api/v1/subscriptions/{id}/payments": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "pay",
+        "summary": "Create pending offline payment transaction for subscription",
+        "operationId": "requestPayment",
         "parameters": [
           {
             "name": "id",
@@ -560,12 +585,12 @@
           }
         ],
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentTransaction"
+                  "type": "object"
                 }
               }
             }
@@ -576,8 +601,9 @@
     "/api/v1/subscriptions/{id}/members": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List members for a subscription",
         "operationId": "members",
         "parameters": [
           {
@@ -596,10 +622,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubscriptionMember"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -608,9 +631,10 @@
       },
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "invite_1",
+        "summary": "Invite another worker to share a family/crew subscription",
+        "operationId": "inviteMember",
         "parameters": [
           {
             "name": "id",
@@ -626,19 +650,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/InviteSubscriptionMember"
+                "$ref": "#/components/schemas/InviteSubscriptionMemberResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionMember"
+                  "type": "object"
                 }
               }
             }
@@ -649,8 +673,9 @@
     "/api/v1/subscriptions/{id}/cancel": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "Cancel a worker subscription",
         "operationId": "cancel",
         "parameters": [
           {
@@ -669,7 +694,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Subscription"
+                  "type": "object"
                 }
               }
             }
@@ -680,8 +705,9 @@
     "/api/v1/subscription-invitations/{id}/reject": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "Reject a family/crew subscription invitation",
         "operationId": "rejectInvitation",
         "parameters": [
           {
@@ -700,7 +726,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionMember"
+                  "type": "object"
                 }
               }
             }
@@ -711,9 +737,10 @@
     "/api/v1/subscription-invitations/{id}/accept": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "accept_1",
+        "summary": "Accept a family/crew subscription invitation",
+        "operationId": "acceptInvitation",
         "parameters": [
           {
             "name": "id",
@@ -731,7 +758,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionMember"
+                  "type": "object"
                 }
               }
             }
@@ -742,26 +769,27 @@
     "/api/v1/referrals": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "referral",
+        "summary": "Apply a referral code to current worker account",
+        "operationId": "useReferralCode",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Referral"
+                "$ref": "#/components/schemas/UseReferralCodeResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReferralUse"
+                  "type": "object"
                 }
               }
             }
@@ -772,8 +800,9 @@
     "/api/v1/referral-rewards/{id}/redeem": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "Redeem a referral reward to extend active subscription",
         "operationId": "redeem",
         "parameters": [
           {
@@ -792,7 +821,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReferralReward"
+                  "type": "object"
                 }
               }
             }
@@ -803,8 +832,9 @@
     "/api/v1/payments/{id}/reject": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "Reject a pending offline payment",
         "operationId": "reject_1",
         "parameters": [
           {
@@ -823,7 +853,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentTransaction"
+                  "type": "object"
                 }
               }
             }
@@ -834,9 +864,10 @@
     "/api/v1/payments/{id}/confirm-offline": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "confirm",
+        "summary": "Confirm an offline payment with unique receipt reference",
+        "operationId": "confirmOffline",
         "parameters": [
           {
             "name": "id",
@@ -852,7 +883,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Payment"
+                "$ref": "#/components/schemas/ConfirmOfflinePaymentResource"
               }
             }
           },
@@ -864,7 +895,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaymentTransaction"
+                  "type": "object"
                 }
               }
             }
@@ -875,10 +906,19 @@
     "/api/v1/moderation/reports": {
       "get": {
         "tags": [
-          "moderation-controller"
+          "Moderation"
         ],
+        "summary": "List community moderation reports",
         "operationId": "queue",
         "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "page",
             "in": "query",
@@ -906,7 +946,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesCommunityReport"
+                  "type": "object"
                 }
               }
             }
@@ -915,26 +955,27 @@
       },
       "post": {
         "tags": [
-          "moderation-controller"
+          "Moderation"
         ],
+        "summary": "Submit a community report for moderation",
         "operationId": "report",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Report"
+                "$ref": "#/components/schemas/SubmitReportResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/CommunityReport"
+                  "type": "object"
                 }
               }
             }
@@ -945,8 +986,9 @@
     "/api/v1/moderation/reports/{id}/decision": {
       "post": {
         "tags": [
-          "moderation-controller"
+          "Moderation"
         ],
+        "summary": "Approve or reject a pending community moderation report",
         "operationId": "decide",
         "parameters": [
           {
@@ -963,7 +1005,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Decision"
+                "$ref": "#/components/schemas/ModerationDecisionResource"
               }
             }
           },
@@ -975,7 +1017,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/CommunityReport"
+                  "type": "object"
                 }
               }
             }
@@ -986,9 +1028,10 @@
     "/api/v1/incidents/{id}/resolve": {
       "post": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "resolve",
+        "summary": "Resolve an open safety incident",
+        "operationId": "resolveIncident",
         "parameters": [
           {
             "name": "id",
@@ -1006,7 +1049,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SafetyIncident"
+                  "type": "object"
                 }
               }
             }
@@ -1017,9 +1060,10 @@
     "/api/v1/commutes": {
       "get": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "list_1",
+        "summary": "List commutes for current worker",
+        "operationId": "mine_1",
         "parameters": [
           {
             "name": "page",
@@ -1048,7 +1092,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesCommute"
+                  "type": "object"
                 }
               }
             }
@@ -1057,26 +1101,27 @@
       },
       "post": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
+        "summary": "Start a new monitored night commute",
         "operationId": "start",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Start"
+                "$ref": "#/components/schemas/StartCommuteResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Commute"
+                  "type": "object"
                 }
               }
             }
@@ -1087,9 +1132,10 @@
     "/api/v1/commutes/{id}/telemetry": {
       "get": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "telemetry",
+        "summary": "List recorded telemetry pings for a commute",
+        "operationId": "route",
         "parameters": [
           {
             "name": "id",
@@ -1107,10 +1153,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TelemetryPing"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -1119,9 +1162,10 @@
       },
       "post": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "ping",
+        "summary": "Record a GPS telemetry ping on an active commute",
+        "operationId": "telemetry",
         "parameters": [
           {
             "name": "id",
@@ -1137,19 +1181,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Ping"
+                "$ref": "#/components/schemas/RecordTelemetryPingResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/TelemetryPing"
+                  "type": "object"
                 }
               }
             }
@@ -1160,8 +1204,9 @@
     "/api/v1/commutes/{id}/incidents": {
       "get": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
+        "summary": "List safety incidents recorded on a commute",
         "operationId": "incidents",
         "parameters": [
           {
@@ -1180,10 +1225,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SafetyIncident"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -1192,9 +1234,10 @@
       },
       "post": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "incident",
+        "summary": "Trigger SOS or safety incident on an active commute",
+        "operationId": "triggerIncident",
         "parameters": [
           {
             "name": "id",
@@ -1210,19 +1253,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Incident"
+                "$ref": "#/components/schemas/ReportSafetyIncidentResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SafetyIncident"
+                  "type": "object"
                 }
               }
             }
@@ -1233,8 +1276,9 @@
     "/api/v1/commutes/{id}/delay": {
       "post": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
+        "summary": "Extend estimated arrival deadline for an active commute",
         "operationId": "delay",
         "parameters": [
           {
@@ -1251,7 +1295,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Delay"
+                "$ref": "#/components/schemas/DelayCommuteResource"
               }
             }
           },
@@ -1263,7 +1307,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Commute"
+                  "type": "object"
                 }
               }
             }
@@ -1271,42 +1315,12 @@
         }
       }
     },
-    "/api/v1/commutes/{id}/cancel": {
+    "/api/v1/commutes/{id}/arrive": {
       "post": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "cancel_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Commute"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/commutes/{id}/arrival": {
-      "post": {
-        "tags": [
-          "commute-controller"
-        ],
+        "summary": "Confirm safe arrival at destination",
         "operationId": "arrive",
         "parameters": [
           {
@@ -1325,7 +1339,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Commute"
+                  "type": "object"
                 }
               }
             }
@@ -1336,9 +1350,10 @@
     "/api/v1/community/services": {
       "get": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "services",
+        "summary": "Search approved night-shift service points with open-now & radius filtering",
+        "operationId": "listServices",
         "parameters": [
           {
             "name": "type",
@@ -1420,7 +1435,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesServiceResource"
+                  "type": "object"
                 }
               }
             }
@@ -1429,26 +1444,27 @@
       },
       "post": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "submit",
+        "summary": "Submit a new night-shift service point with opening hours",
+        "operationId": "submitService",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Service"
+                "$ref": "#/components/schemas/SubmitServicePointResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceResource"
+                  "type": "object"
                 }
               }
             }
@@ -1459,26 +1475,27 @@
     "/api/v1/community/route-ratings": {
       "post": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "rate",
+        "summary": "Rate route safety after completing a commute",
+        "operationId": "rateRoute",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Rating"
+                "$ref": "#/components/schemas/RateRouteResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RouteRating"
+                  "type": "object"
                 }
               }
             }
@@ -1489,9 +1506,10 @@
     "/api/v1/community/risk-zones": {
       "get": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "risks",
+        "summary": "List approved active risk zones",
+        "operationId": "listRiskZones",
         "parameters": [
           {
             "name": "page",
@@ -1520,7 +1538,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesRiskZone"
+                  "type": "object"
                 }
               }
             }
@@ -1529,26 +1547,27 @@
       },
       "post": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "report_1",
+        "summary": "Report a new night risk zone for moderation",
+        "operationId": "reportRisk",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Risk"
+                "$ref": "#/components/schemas/ReportRiskZoneResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RiskZone"
+                  "type": "object"
                 }
               }
             }
@@ -1559,9 +1578,10 @@
     "/api/v1/community/risk-zones/{id}/resolve": {
       "post": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "resolve_1",
+        "summary": "Resolve an active approved risk zone",
+        "operationId": "resolveRisk",
         "parameters": [
           {
             "name": "id",
@@ -1579,7 +1599,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RiskZone"
+                  "type": "object"
                 }
               }
             }
@@ -1590,9 +1610,10 @@
     "/api/v1/community/posts": {
       "get": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "posts",
+        "summary": "List community feed posts optionally filtered by district",
+        "operationId": "listPosts",
         "parameters": [
           {
             "name": "district",
@@ -1629,7 +1650,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesCommunityPost"
+                  "type": "object"
                 }
               }
             }
@@ -1638,26 +1659,27 @@
       },
       "post": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "post",
+        "summary": "Publish a community feed post",
+        "operationId": "createPost",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Post"
+                "$ref": "#/components/schemas/CreateCommunityPostResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/CommunityPost"
+                  "type": "object"
                 }
               }
             }
@@ -1668,8 +1690,9 @@
     "/api/v1/benefits": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List active collective benefits",
         "operationId": "benefits",
         "responses": {
           "200": {
@@ -1677,10 +1700,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CollectiveBenefit"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -1689,26 +1709,27 @@
       },
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "benefit",
+        "summary": "Create a collective benefit",
+        "operationId": "createBenefit",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Benefit"
+                "$ref": "#/components/schemas/CreateBenefitResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/CollectiveBenefit"
+                  "type": "object"
                 }
               }
             }
@@ -1719,9 +1740,10 @@
     "/api/v1/benefits/{id}/claims": {
       "post": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "claim",
+        "summary": "Claim a collective benefit eligible for worker active plan",
+        "operationId": "claimBenefit",
         "parameters": [
           {
             "name": "id",
@@ -1734,12 +1756,12 @@
           }
         ],
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BenefitClaim"
+                  "type": "object"
                 }
               }
             }
@@ -1747,29 +1769,82 @@
         }
       }
     },
-    "/api/v1/auth/register": {
+    "/api/v1/auth/sign-up": {
       "post": {
         "tags": [
-          "identity-controller"
+          "Authentication (IAM Structured)"
         ],
-        "operationId": "register",
+        "summary": "Structured sign-up contract (pending IAM implementation)",
+        "operationId": "signUp",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Register"
+                "$ref": "#/components/schemas/SignUpResource"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountResult"
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Authentication (IAM Structured)"
+        ],
+        "summary": "Structured sign-out contract (pending IAM implementation)",
+        "operationId": "signOut",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/sign-in": {
+      "post": {
+        "tags": [
+          "Authentication (IAM Structured)"
+        ],
+        "summary": "Structured sign-in contract (pending IAM implementation)",
+        "operationId": "signIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInResource"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -1780,59 +1855,14 @@
     "/api/v1/auth/password-reset": {
       "post": {
         "tags": [
-          "password-recovery-controller"
+          "Authentication (IAM Structured)"
         ],
-        "operationId": "request",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Request"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "202": {
-            "description": "Accepted"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/password-reset/confirm": {
-      "post": {
-        "tags": [
-          "password-recovery-controller"
-        ],
-        "operationId": "confirm_1",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Reset"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/logout": {
-      "post": {
-        "tags": [
-          "identity-controller"
-        ],
-        "operationId": "logout",
+        "summary": "Structured password-reset contract (pending IAM implementation)",
+        "operationId": "passwordReset",
         "parameters": [
           {
-            "name": "Authorization",
-            "in": "header",
+            "name": "email",
+            "in": "query",
             "required": true,
             "schema": {
               "type": "string"
@@ -1840,35 +1870,12 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
-          }
-        }
-      }
-    },
-    "/api/v1/auth/login": {
-      "post": {
-        "tags": [
-          "identity-controller"
-        ],
-        "operationId": "login",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Login"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/LoginResult"
+                  "type": "object"
                 }
               }
             }
@@ -1876,72 +1883,12 @@
         }
       }
     },
-    "/api/v1/alerts/{id}/read": {
+    "/api/v1/alerts/deliveries/{id}/retry": {
       "post": {
         "tags": [
-          "commute-controller"
+          "Alert Deliveries"
         ],
-        "operationId": "read",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Alert"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/staff": {
-      "post": {
-        "tags": [
-          "admin-controller"
-        ],
-        "operationId": "staff",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Staff"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AccountResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/admin/alert-deliveries/{id}/retry": {
-      "post": {
-        "tags": [
-          "alert-delivery-controller"
-        ],
+        "summary": "Retry a failed external alert delivery",
         "operationId": "retry",
         "parameters": [
           {
@@ -1960,7 +1907,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Alert"
+                  "type": "object"
                 }
               }
             }
@@ -1968,50 +1915,55 @@
         }
       }
     },
-    "/api/v1/workers/{id}/commutes": {
-      "get": {
+    "/api/v1/alerts/deliveries/dispatch": {
+      "post": {
         "tags": [
-          "commute-controller"
+          "Alert Deliveries"
         ],
-        "operationId": "accompanied",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
+        "summary": "Trigger immediate dispatch of pending external alerts",
+        "operationId": "dispatchNow",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesCommute"
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts": {
+      "post": {
+        "tags": [
+          "Accounts & Profiles"
+        ],
+        "summary": "Create a worker or trusted contact profile",
+        "operationId": "createProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProfileResource"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -2022,19 +1974,11 @@
     "/api/v1/wellness/summary": {
       "get": {
         "tags": [
-          "wellness-controller"
+          "Wellness"
         ],
+        "summary": "Get 7-day wellness rest summary and daily breakdown",
         "operationId": "summary",
         "parameters": [
-          {
-            "name": "through",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
           {
             "name": "timeZone",
             "in": "query",
@@ -2051,7 +1995,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Summary"
+                  "type": "object"
                 }
               }
             }
@@ -2062,8 +2006,9 @@
     "/api/v1/subscription-invitations": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List family/crew subscription invitations for current worker",
         "operationId": "invitations",
         "responses": {
           "200": {
@@ -2071,10 +2016,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SubscriptionMember"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2085,8 +2027,9 @@
     "/api/v1/referral-rewards": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List referral rewards earned by current worker",
         "operationId": "rewards",
         "responses": {
           "200": {
@@ -2094,10 +2037,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReferralReward"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2108,16 +2048,17 @@
     "/api/v1/referral-code": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "code",
+        "summary": "Get or generate referral code for current worker",
+        "operationId": "referralCode",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReferralCode"
+                  "type": "object"
                 }
               }
             }
@@ -2128,8 +2069,9 @@
     "/api/v1/plans": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List active subscription plans",
         "operationId": "plans",
         "responses": {
           "200": {
@@ -2137,10 +2079,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plan"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2151,8 +2090,9 @@
     "/api/v1/payments": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List payment transactions (worker own or all when requested/staff)",
         "operationId": "payments",
         "parameters": [
           {
@@ -2174,6 +2114,15 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -2182,7 +2131,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesPaymentTransaction"
+                  "type": "object"
                 }
               }
             }
@@ -2193,8 +2142,9 @@
     "/api/v1/moderation/reports/{id}/actions": {
       "get": {
         "tags": [
-          "moderation-controller"
+          "Moderation"
         ],
+        "summary": "Get moderation audit actions for a report",
         "operationId": "audit",
         "parameters": [
           {
@@ -2213,10 +2163,71 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ModerationAction"
-                  }
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companion/live": {
+      "get": {
+        "tags": [
+          "Commutes & Companion Tracking"
+        ],
+        "summary": "Get live tracking status of monitored workers for current companion",
+        "operationId": "companionLive",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companion/alerts": {
+      "get": {
+        "tags": [
+          "Commutes & Companion Tracking"
+        ],
+        "summary": "List safety alerts received by current trusted companion",
+        "operationId": "companionAlerts",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -2227,9 +2238,10 @@
     "/api/v1/commutes/{id}": {
       "get": {
         "tags": [
-          "commute-controller"
+          "Commutes & Companion Tracking"
         ],
-        "operationId": "view_1",
+        "summary": "Get commute details by id",
+        "operationId": "view",
         "parameters": [
           {
             "name": "id",
@@ -2247,7 +2259,50 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Commute"
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/commutes/mine": {
+      "get": {
+        "tags": [
+          "Commutes & Companion Tracking"
+        ],
+        "summary": "List commutes for current worker",
+        "operationId": "mine_2",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -2258,19 +2313,17 @@
     "/api/v1/community/services/mine": {
       "get": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "mine_1",
+        "summary": "List service points submitted by current worker",
+        "operationId": "myServices",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ServiceResource"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2281,19 +2334,17 @@
     "/api/v1/community/route-ratings/mine": {
       "get": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "ratings",
+        "summary": "List route ratings submitted by current worker",
+        "operationId": "myRatings",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RouteRating"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2304,8 +2355,9 @@
     "/api/v1/benefit-claims": {
       "get": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
+        "summary": "List collective benefit claims for current worker",
         "operationId": "claims",
         "responses": {
           "200": {
@@ -2313,10 +2365,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BenefitClaim"
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2324,41 +2373,20 @@
         }
       }
     },
-    "/api/v1/alerts": {
+    "/api/v1/auth/status": {
       "get": {
         "tags": [
-          "commute-controller"
+          "Authentication (IAM Structured)"
         ],
-        "operationId": "alerts",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
+        "summary": "Get IAM module enforcement status",
+        "operationId": "status",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesAlert"
+                  "type": "object"
                 }
               }
             }
@@ -2366,41 +2394,20 @@
         }
       }
     },
-    "/api/v1/admin/alert-deliveries": {
+    "/api/v1/alerts/deliveries": {
       "get": {
         "tags": [
-          "alert-delivery-controller"
+          "Alert Deliveries"
         ],
+        "summary": "List external alert delivery records",
         "operationId": "queue_1",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagesAlert"
+                  "type": "object"
                 }
               }
             }
@@ -2408,12 +2415,13 @@
         }
       }
     },
-    "/api/v1/wellness/rest-sessions/{id}": {
-      "delete": {
+    "/api/v1/accounts/{id}": {
+      "get": {
         "tags": [
-          "wellness-controller"
+          "Accounts & Profiles"
         ],
-        "operationId": "delete",
+        "summary": "Get account profile by ID",
+        "operationId": "byId",
         "parameters": [
           {
             "name": "id",
@@ -2426,8 +2434,68 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/directory": {
+      "get": {
+        "tags": [
+          "Accounts & Profiles"
+        ],
+        "summary": "List active profiles available in workspace directory",
+        "operationId": "directory",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wellness/rest-sessions/{id}": {
+      "delete": {
+        "tags": [
+          "Wellness"
+        ],
+        "summary": "Delete a logged rest session",
+        "operationId": "deleteRestSession",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -2435,8 +2503,9 @@
     "/api/v1/trust-links/{id}": {
       "delete": {
         "tags": [
-          "identity-controller"
+          "Trust Links"
         ],
+        "summary": "Revoke an existing trust link",
         "operationId": "revoke",
         "parameters": [
           {
@@ -2455,7 +2524,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrustLink"
+                  "type": "object"
                 }
               }
             }
@@ -2466,9 +2535,10 @@
     "/api/v1/subscription-members/{id}": {
       "delete": {
         "tags": [
-          "subscription-controller"
+          "Subscriptions & Benefits"
         ],
-        "operationId": "remove",
+        "summary": "Revoke a subscription member seat",
+        "operationId": "removeMember",
         "parameters": [
           {
             "name": "id",
@@ -2481,8 +2551,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -2490,9 +2567,10 @@
     "/api/v1/community/posts/{id}": {
       "delete": {
         "tags": [
-          "community-controller"
+          "Community & Safety Map"
         ],
-        "operationId": "delete_1",
+        "summary": "Delete a community post",
+        "operationId": "deletePost",
         "parameters": [
           {
             "name": "id",
@@ -2505,8 +2583,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -2514,43 +2599,18 @@
   },
   "components": {
     "schemas": {
-      "Goal": {
+      "UpdateSleepGoalResource": {
         "type": "object",
         "properties": {
           "targetMinutes": {
             "type": "integer",
             "format": "int32",
-            "maximum": 1440,
-            "minimum": 60
+            "maximum": 720,
+            "minimum": 240
           }
         }
       },
-      "SleepGoal": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "targetMinutes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Hours": {
+      "ServiceOpeningIntervalResource": {
         "type": "object",
         "properties": {
           "dayOfWeek": {
@@ -2579,7 +2639,7 @@
           "opensAt"
         ]
       },
-      "Service": {
+      "SubmitServicePointResource": {
         "type": "object",
         "properties": {
           "name": {
@@ -2606,7 +2666,7 @@
           "openingHours": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Hours"
+              "$ref": "#/components/schemas/ServiceOpeningIntervalResource"
             },
             "maxItems": 28,
             "minItems": 0
@@ -2619,110 +2679,7 @@
           "type"
         ]
       },
-      "ServiceOpeningInterval": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "serviceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "dayOfWeek": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "opensAt": {
-            "type": "string"
-          },
-          "closesAt": {
-            "type": "string"
-          },
-          "closesNextDay": {
-            "type": "boolean"
-          },
-          "is24Hours": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ServicePoint": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reportedBy": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "latitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "timeZone": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ServiceResource": {
-        "type": "object",
-        "properties": {
-          "service": {
-            "$ref": "#/components/schemas/ServicePoint"
-          },
-          "openingHours": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ServiceOpeningInterval"
-            }
-          },
-          "trustScore": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "openAtReference": {
-            "type": "boolean"
-          },
-          "referenceTime": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "Vote": {
+      "VoteServicePointResource": {
         "type": "object",
         "properties": {
           "direction": {
@@ -2733,47 +2690,16 @@
           }
         }
       },
-      "ServiceVote": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "serviceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "accountId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "direction": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Profile": {
+      "UpdateProfileResource": {
         "type": "object",
         "properties": {
           "fullName": {
             "type": "string",
-            "maxLength": 150,
-            "minLength": 0
+            "minLength": 1
           },
           "phone": {
             "type": "string",
-            "maxLength": 30,
-            "minLength": 0
+            "minLength": 1
           },
           "shiftType": {
             "type": "string"
@@ -2785,76 +2711,20 @@
             "type": "string"
           },
           "timeZone": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           }
         },
         "required": [
           "fullName",
-          "phone",
-          "timeZone"
+          "phone"
         ]
       },
-      "AccountResult": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "email": {
-            "type": "string"
-          },
-          "fullName": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string"
-          },
-          "shiftType": {
-            "type": "string"
-          },
-          "shiftStart": {
-            "type": "string"
-          },
-          "shiftEnd": {
-            "type": "string"
-          },
-          "timeZone": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        }
-      },
-      "Password": {
-        "type": "object",
-        "properties": {
-          "currentPassword": {
-            "type": "string",
-            "minLength": 1
-          },
-          "newPassword": {
-            "type": "string",
-            "maxLength": 72,
-            "minLength": 12
-          }
-        },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
-      },
-      "Preference": {
+      "UpdateNotificationPreferenceResource": {
         "type": "object",
         "properties": {
           "channel": {
             "type": "string",
-            "pattern": "EMAIL|WHATSAPP|SMS|IN_APP"
+            "minLength": 1
           },
           "enabled": {
             "type": "boolean"
@@ -2879,43 +2749,7 @@
           "timeZone"
         ]
       },
-      "NotificationPreference": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "accountId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "channel": {
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "priorityStart": {
-            "type": "string"
-          },
-          "priorityEnd": {
-            "type": "string"
-          },
-          "timeZone": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Rest": {
+      "LogRestSessionResource": {
         "type": "object",
         "properties": {
           "startTime": {
@@ -2933,54 +2767,15 @@
             "minimum": 1
           },
           "notes": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 0
+            "type": "string"
           }
         },
         "required": [
           "endTime",
-          "notes",
           "startTime"
         ]
       },
-      "RestSession": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "startTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "quality": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "InviteTrustedContact": {
+      "CreateTrustLinkResource": {
         "type": "object",
         "properties": {
           "contactEmail": {
@@ -2993,39 +2788,7 @@
           "contactEmail"
         ]
       },
-      "TrustLink": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "contactId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "acceptedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Subscribe": {
+      "SubscribeResource": {
         "type": "object",
         "properties": {
           "planId": {
@@ -3037,80 +2800,7 @@
           "planId"
         ]
       },
-      "Subscription": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "planId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endsAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PaymentTransaction": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "subscriptionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "amount": {
-            "type": "number"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "reference": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "InviteSubscriptionMember": {
+      "InviteSubscriptionMemberResource": {
         "type": "object",
         "properties": {
           "workerEmail": {
@@ -3123,109 +2813,25 @@
           "workerEmail"
         ]
       },
-      "SubscriptionMember": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "subscriptionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Referral": {
+      "UseReferralCodeResource": {
         "type": "object",
         "properties": {
           "code": {
             "type": "string",
-            "minLength": 1
+            "maxLength": 40,
+            "minLength": 0
           }
         },
         "required": [
           "code"
         ]
       },
-      "ReferralUse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "referralId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "referredWorkerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ReferralReward": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "referralUseId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "days": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Payment": {
+      "ConfirmOfflinePaymentResource": {
         "type": "object",
         "properties": {
           "reference": {
             "type": "string",
-            "maxLength": 150,
+            "maxLength": 120,
             "minLength": 0
           }
         },
@@ -3233,7 +2839,7 @@
           "reference"
         ]
       },
-      "Report": {
+      "SubmitReportResource": {
         "type": "object",
         "properties": {
           "targetType": {
@@ -3256,41 +2862,7 @@
           "targetType"
         ]
       },
-      "CommunityReport": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reportedBy": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "targetType": {
-            "type": "string"
-          },
-          "targetId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Decision": {
+      "ModerationDecisionResource": {
         "type": "object",
         "properties": {
           "decision": {
@@ -3308,45 +2880,7 @@
           "notes"
         ]
       },
-      "SafetyIncident": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "commuteId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "reportedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Start": {
+      "StartCommuteResource": {
         "type": "object",
         "properties": {
           "origin": {
@@ -3387,60 +2921,7 @@
           "transport"
         ]
       },
-      "Commute": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "origin": {
-            "type": "string"
-          },
-          "destination": {
-            "type": "string"
-          },
-          "transport": {
-            "type": "string"
-          },
-          "startTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "estimatedArrivalTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "toleranceMinutes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "status": {
-            "type": "string"
-          },
-          "arrivalTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "delayUntil": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Ping": {
+      "RecordTelemetryPingResource": {
         "type": "object",
         "properties": {
           "latitude": {
@@ -3470,44 +2951,7 @@
           "recordedAt"
         ]
       },
-      "TelemetryPing": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "commuteId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "latitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "speed": {
-            "type": "number",
-            "format": "double"
-          },
-          "recordedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Incident": {
+      "ReportSafetyIncidentResource": {
         "type": "object",
         "properties": {
           "type": {
@@ -3525,7 +2969,7 @@
           "type"
         ]
       },
-      "Delay": {
+      "DelayCommuteResource": {
         "type": "object",
         "properties": {
           "minutes": {
@@ -3536,7 +2980,7 @@
           }
         }
       },
-      "Rating": {
+      "RateRouteResource": {
         "type": "object",
         "properties": {
           "commuteId": {
@@ -3560,39 +3004,7 @@
           "commuteId"
         ]
       },
-      "RouteRating": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "commuteId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "score": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "comments": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Risk": {
+      "ReportRiskZoneResource": {
         "type": "object",
         "properties": {
           "description": {
@@ -3618,45 +3030,7 @@
           "riskLevel"
         ]
       },
-      "RiskZone": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reportedBy": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "description": {
-            "type": "string"
-          },
-          "riskLevel": {
-            "type": "string"
-          },
-          "latitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Post": {
+      "CreateCommunityPostResource": {
         "type": "object",
         "properties": {
           "title": {
@@ -3681,55 +3055,23 @@
           "title"
         ]
       },
-      "CommunityPost": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "authorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string"
-          },
-          "district": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Benefit": {
+      "CreateBenefitResource": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "maxLength": 150,
+            "maxLength": 120,
             "minLength": 0
           },
           "description": {
             "type": "string",
-            "maxLength": 1500,
+            "maxLength": 500,
             "minLength": 0
           },
           "planCode": {
             "type": "string",
-            "minLength": 1
-          },
-          "active": {
-            "type": "boolean"
+            "maxLength": 60,
+            "minLength": 0
           }
         },
         "required": [
@@ -3738,71 +3080,13 @@
           "planCode"
         ]
       },
-      "CollectiveBenefit": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "planCode": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "BenefitClaim": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "benefitId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Register": {
+      "SignUpResource": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
-            "maxLength": 254,
-            "minLength": 0
+            "minLength": 1
           },
           "password": {
             "type": "string",
@@ -3811,17 +3095,15 @@
           },
           "fullName": {
             "type": "string",
-            "maxLength": 150,
-            "minLength": 0
+            "minLength": 1
           },
           "phone": {
             "type": "string",
-            "maxLength": 30,
-            "minLength": 0
+            "minLength": 1
           },
           "role": {
             "type": "string",
-            "pattern": "WORKER|TRUSTED_CONTACT"
+            "minLength": 1
           },
           "shiftType": {
             "type": "string"
@@ -3844,50 +3126,17 @@
           "role"
         ]
       },
-      "Request": {
+      "SignInResource": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
             "minLength": 1
-          }
-        },
-        "required": [
-          "email"
-        ]
-      },
-      "Reset": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "minLength": 1
-          },
-          "newPassword": {
-            "type": "string",
-            "maxLength": 72,
-            "minLength": 12
-          }
-        },
-        "required": [
-          "newPassword",
-          "token"
-        ]
-      },
-      "Login": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "maxLength": 254,
-            "minLength": 0
           },
           "password": {
             "type": "string",
-            "maxLength": 72,
-            "minLength": 0
+            "minLength": 1
           }
         },
         "required": [
@@ -3895,67 +3144,7 @@
           "password"
         ]
       },
-      "LoginResult": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string"
-          },
-          "tokenType": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "account": {
-            "$ref": "#/components/schemas/AccountResult"
-          }
-        }
-      },
-      "Alert": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "commuteId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "incidentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "contactId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "channel": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "deliveredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Staff": {
+      "CreateProfileResource": {
         "type": "object",
         "properties": {
           "email": {
@@ -3963,381 +3152,51 @@
             "format": "email",
             "minLength": 1
           },
-          "password": {
-            "type": "string",
-            "maxLength": 72,
-            "minLength": 12
-          },
           "fullName": {
             "type": "string",
-            "maxLength": 150,
-            "minLength": 0
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1
           },
           "role": {
             "type": "string",
-            "pattern": "MODERATOR|ADMIN"
+            "minLength": 1
+          },
+          "shiftType": {
+            "type": "string"
+          },
+          "shiftStart": {
+            "type": "string"
+          },
+          "shiftEnd": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
           }
         },
         "required": [
           "email",
           "fullName",
-          "password",
+          "phone",
           "role"
         ]
-      },
-      "PagesCommute": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Commute"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "DailyRest": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "minutes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "targetMinutes": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "Summary": {
-        "type": "object",
-        "properties": {
-          "days": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DailyRest"
-            }
-          },
-          "totalMinutes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "averageMinutes": {
-            "type": "number",
-            "format": "double"
-          },
-          "deficitMinutes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "suggestions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "disclaimer": {
-            "type": "string"
-          }
-        }
-      },
-      "PagesRestSession": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RestSession"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesTrustLink": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TrustLink"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ReferralCode": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "Plan": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "monthlyPrice": {
-            "type": "number"
-          },
-          "maxContacts": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "maxWorkers": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesPaymentTransaction": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PaymentTransaction"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesCommunityReport": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CommunityReport"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ModerationAction": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reportId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "moderatorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "decision": {
-            "type": "string"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesServiceResource": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ServiceResource"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesRiskZone": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RiskZone"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesCommunityPost": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CommunityPost"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PagesAlert": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Alert"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       }
     },
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "scheme": "bearer"
+        "description": "Structured IAM security scheme (currently deferred while app.security.enabled=false)",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "actorContextHeader": {
+        "type": "apiKey",
+        "description": "Optional actor UUID header used when IAM authentication enforcement is disabled",
+        "name": "X-Actor-Id",
+        "in": "header"
       }
     }
   }
