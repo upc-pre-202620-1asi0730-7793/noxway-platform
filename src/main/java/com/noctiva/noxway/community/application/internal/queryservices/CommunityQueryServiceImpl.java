@@ -181,6 +181,9 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                       p.getTitle(),
                       p.getContent(),
                       p.getDistrict(),
+                      p.getCategory(),
+                      p.getLatitude(),
+                      p.getLongitude(),
                       p.getCreatedAt());
                 })
             .toList();

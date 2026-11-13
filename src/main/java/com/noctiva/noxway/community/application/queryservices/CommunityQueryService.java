@@ -62,5 +62,8 @@ public interface CommunityQueryService {
       String title,
       String content,
       String district,
+      String category,
+      Double latitude,
+      Double longitude,
       Instant createdAt) {}
 }

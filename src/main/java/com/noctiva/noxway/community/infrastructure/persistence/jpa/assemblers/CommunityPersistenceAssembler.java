@@ -140,6 +140,9 @@ public final class CommunityPersistenceAssembler {
         e.getTitle(),
         e.getContent(),
         e.getDistrict(),
+        e.getCategory(),
+        e.getLatitude(),
+        e.getLongitude(),
         e.getCreatedAt(),
         e.getVersion());
   }
@@ -151,6 +154,9 @@ public final class CommunityPersistenceAssembler {
     e.setTitle(p.getTitle());
     e.setContent(p.getContent());
     e.setDistrict(p.getDistrict());
+    e.setCategory(p.getCategory());
+    e.setLatitude(p.getLatitude());
+    e.setLongitude(p.getLongitude());
     e.setCreatedAt(p.getCreatedAt());
     e.setVersion(p.getVersion());
     return e;

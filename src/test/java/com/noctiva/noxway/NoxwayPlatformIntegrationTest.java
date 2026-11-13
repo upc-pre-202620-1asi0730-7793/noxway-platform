@@ -412,7 +412,7 @@ class NoxwayPlatformIntegrationTest {
     assertEquals(-1, afterDownvote.get("trustScore").asInt());
     assertEquals(-1, afterDownvote.get("myVote").asInt());
 
-    // Post ownership test
+    // Post ownership test (legacy payload without category/location remains supported)
     JsonNode post =
         call(
             "POST",
@@ -423,6 +423,48 @@ class NoxwayPlatformIntegrationTest {
     String postId = post.get("id").asText();
     call("DELETE", "/api/v1/community/posts/" + postId, WORKER_SECONDARY, null, 403);
     call("DELETE", "/api/v1/community/posts/" + postId, ADMIN, null, 204);
+
+    // Post with category and OpenStreetMap coordinates persists and returns them in list query
+    JsonNode geoPost =
+        call(
+            "POST",
+            "/api/v1/community/posts",
+            WORKER_PRIMARY,
+            Map.of(
+                "title", "Desvio nocturno en Jr. de la Union",
+                "content", "Obras municipales hasta las 05:00 AM",
+                "district", "Lima Centro",
+                "category", "Aviso de seguridad",
+                "latitude", -12.0485,
+                "longitude", -77.0315),
+            201);
+    assertEquals("Aviso de seguridad", geoPost.get("category").asText());
+    assertEquals(-12.0485, geoPost.get("latitude").asDouble(), 0.0001);
+    assertEquals(-77.0315, geoPost.get("longitude").asDouble(), 0.0001);
+
+    // Partial coordinates rejected with 422
+    call(
+        "POST",
+        "/api/v1/community/posts",
+        WORKER_PRIMARY,
+        Map.of(
+            "title", "Aviso incompleto",
+            "content", "Solo latitud",
+            "district", "Lince",
+            "latitude", -12.05),
+        422);
+
+    JsonNode limaPosts =
+        call("GET", "/api/v1/community/posts?district=Lima Centro", WORKER_PRIMARY, null, 200)
+            .get("items");
+    assertTrue(
+        java.util.stream.StreamSupport.stream(limaPosts.spliterator(), false)
+            .anyMatch(
+                item ->
+                    geoPost.get("id").asText().equals(item.get("id").asText())
+                        && "Aviso de seguridad".equals(item.get("category").asText())
+                        && !item.get("latitude").isNull()
+                        && !item.get("longitude").isNull()));
 
     // 2. Commute + telemetry + delay + SOS incident -> Companion live & alerts -> arrive -> rate route
     Instant start = Instant.now().minusSeconds(60);

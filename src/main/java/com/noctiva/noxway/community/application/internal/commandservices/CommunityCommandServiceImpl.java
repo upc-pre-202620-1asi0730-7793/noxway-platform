@@ -237,7 +237,14 @@ public class CommunityCommandServiceImpl implements CommunityCommandService {
   public Result<CommunityPost, ApplicationError> handle(CreateCommunityPostCommand cmd) {
     try {
       var post =
-          CommunityPost.create(cmd.authorId(), cmd.title(), cmd.content(), cmd.district());
+          CommunityPost.create(
+              cmd.authorId(),
+              cmd.title(),
+              cmd.content(),
+              cmd.district(),
+              cmd.category(),
+              cmd.latitude(),
+              cmd.longitude());
       return Result.success(postRepository.save(post));
     } catch (RuleViolation ex) {
       return Result.failure(new ApplicationError.BusinessRuleError(ex.getMessage()));

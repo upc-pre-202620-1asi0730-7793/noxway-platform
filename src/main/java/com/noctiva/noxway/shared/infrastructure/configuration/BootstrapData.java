@@ -397,19 +397,28 @@ public class BootstrapData implements ApplicationRunner {
               WORKER_PRIMARY_ID,
               "Operativo de serenazgo activo en Av. Arequipa",
               "Patrullaje reforzado entre las cuadras 18 y 35 hasta las 05:30 AM. Tránsito fluido para motos y autos.",
-              "Lince"));
+              "Lince",
+              "Aviso de seguridad",
+              -12.0849,
+              -77.0358));
       posts.save(
           CommunityPost.create(
               WORKER_SECONDARY_ID,
               "Farmacia Universal atendiendo sin cola por ventanilla",
               "Ventanilla nocturna operativa con buena iluminación exterior y zona segura para estacionar 5 minutos.",
-              "Lima Centro"));
+              "Lima Centro",
+              "Reporte de local",
+              -12.0548,
+              -77.0366));
       posts.save(
           CommunityPost.create(
               WORKER_PRIMARY_ID,
               "Precaución por neblina densa en Costa Verde",
               "Visibilidad reducida desde Bajada Armendáriz hasta Magdalena; usar luces neblineras y bajar velocidad.",
-              "Miraflores"));
+              "Miraflores",
+              "Aviso de seguridad",
+              -12.1268,
+              -77.0369));
     }
   }
 

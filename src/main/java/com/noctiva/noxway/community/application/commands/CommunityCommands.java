@@ -38,7 +38,18 @@ public final class CommunityCommands {
   public record RateRouteCommand(UUID commuteId, UUID workerId, int score, String comments) {}
 
   public record CreateCommunityPostCommand(
-      UUID authorId, String title, String content, String district) {}
+      UUID authorId,
+      String title,
+      String content,
+      String district,
+      String category,
+      Double latitude,
+      Double longitude) {
+    public CreateCommunityPostCommand(
+        UUID authorId, String title, String content, String district) {
+      this(authorId, title, content, district, null, null, null);
+    }
+  }
 
   public record DeleteCommunityPostCommand(UUID postId, UUID actorId, boolean privileged) {}
 }

@@ -3047,6 +3047,19 @@
             "type": "string",
             "maxLength": 100,
             "minLength": 0
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
           }
         },
         "required": [

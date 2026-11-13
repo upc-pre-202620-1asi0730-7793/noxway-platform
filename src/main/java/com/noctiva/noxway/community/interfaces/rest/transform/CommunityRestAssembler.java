@@ -52,7 +52,8 @@ public final class CommunityRestAssembler {
 
   public static CreateCommunityPostCommand toCommand(
       UUID authorId, CreateCommunityPostResource r) {
-    return new CreateCommunityPostCommand(authorId, r.title(), r.content(), r.district());
+    return new CreateCommunityPostCommand(
+        authorId, r.title(), r.content(), r.district(), r.category(), r.latitude(), r.longitude());
   }
 
   public static ServicePointResource toResource(ServicePointView v) {
@@ -159,6 +160,9 @@ public final class CommunityRestAssembler {
         p.getTitle(),
         p.getContent(),
         p.getDistrict(),
+        p.getCategory(),
+        p.getLatitude(),
+        p.getLongitude(),
         p.getCreatedAt());
   }
 
@@ -176,6 +180,9 @@ public final class CommunityRestAssembler {
                         v.title(),
                         v.content(),
                         v.district(),
+                        v.category(),
+                        v.latitude(),
+                        v.longitude(),
                         v.createdAt()))
             .toList(),
         page.page(),
