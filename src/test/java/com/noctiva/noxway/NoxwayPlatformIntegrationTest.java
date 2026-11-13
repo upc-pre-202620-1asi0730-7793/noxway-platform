@@ -383,6 +383,34 @@ class NoxwayPlatformIntegrationTest {
     JsonNode refreshedService =
         call("GET", "/api/v1/community/services/" + serviceId, WORKER_SECONDARY, null, 200);
     assertEquals(1, refreshedService.get("trustScore").asInt());
+    assertEquals(1, refreshedService.get("myVote").asInt());
+
+    // Retracting vote with direction 0 removes the vote cleanly
+    JsonNode retracted =
+        call(
+            "PUT",
+            "/api/v1/community/services/" + serviceId + "/vote",
+            WORKER_SECONDARY,
+            Map.of("direction", 0),
+            200);
+    assertEquals(0, retracted.get("direction").asInt());
+    JsonNode afterRetract =
+        call("GET", "/api/v1/community/services/" + serviceId, WORKER_SECONDARY, null, 200);
+    assertEquals(0, afterRetract.get("trustScore").asInt());
+    assertEquals(0, afterRetract.get("upvotes").asLong());
+    assertEquals(0, afterRetract.get("myVote").asInt());
+
+    // Re-voting after retraction works
+    call(
+        "PUT",
+        "/api/v1/community/services/" + serviceId + "/vote",
+        WORKER_SECONDARY,
+        Map.of("direction", -1),
+        200);
+    JsonNode afterDownvote =
+        call("GET", "/api/v1/community/services/" + serviceId, WORKER_SECONDARY, null, 200);
+    assertEquals(-1, afterDownvote.get("trustScore").asInt());
+    assertEquals(-1, afterDownvote.get("myVote").asInt());
 
     // Post ownership test
     JsonNode post =

@@ -155,6 +155,13 @@ public class CommunityCommandServiceImpl implements CommunityCommandService {
           voteRepository.findByServiceId(cmd.serviceId()).stream()
               .filter(v -> v.getAccountId().equals(cmd.accountId()))
               .findFirst();
+      if (cmd.direction() == 0) {
+        UUID voteId = existing.map(ServiceVote::getId).orElseGet(UUID::randomUUID);
+        Instant createdAt = existing.map(ServiceVote::getCreatedAt).orElseGet(clock::instant);
+        existing.ifPresent(v -> voteRepository.delete(v.getId()));
+        return Result.success(
+            ServiceVote.reconstitute(voteId, cmd.serviceId(), cmd.accountId(), 0, createdAt, 0L));
+      }
       ServiceVote vote;
       if (existing.isPresent()) {
         vote = existing.get();

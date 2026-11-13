@@ -124,7 +124,7 @@ public class CommunityController {
   }
 
   @PutMapping("/services/{id}/vote")
-  @Operation(summary = "Upvote (+1) or downvote (-1) an approved service point")
+  @Operation(summary = "Upvote (+1), downvote (-1), or retract (0) a vote on an approved service point")
   public ResponseEntity<?> voteService(
       @PathVariable UUID id,
       @Valid @RequestBody VoteServicePointResource body,
