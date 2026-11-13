@@ -1,18 +1,68 @@
 package com.noctiva.noxway.commuting.domain.model.aggregates;
 
+import static com.noctiva.noxway.shared.domain.Rules.require;
+
+import com.noctiva.noxway.commuting.domain.model.events.SafetyIncidentTriggeredEvent;
+import com.noctiva.noxway.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
-public record SafetyIncident(
-    UUID id,
-    UUID commuteId,
-    UUID workerId,
-    String type,
-    String description,
-    String status,
-    Instant reportedAt,
-    Instant createdAt,
-    long version) {
+public class SafetyIncident extends AbstractDomainAggregateRoot<SafetyIncident> {
+
+  private final UUID id;
+  private final UUID commuteId;
+  private final UUID workerId;
+  private final String type;
+  private final String description;
+  private String status;
+  private final Instant reportedAt;
+  private final Instant createdAt;
+  private final long version;
+
+  private SafetyIncident(
+      UUID id,
+      UUID commuteId,
+      UUID workerId,
+      String type,
+      String description,
+      String status,
+      Instant reportedAt,
+      Instant createdAt,
+      long version) {
+    this.id = id;
+    this.commuteId = commuteId;
+    this.workerId = workerId;
+    this.type = type;
+    this.description = description;
+    this.status = status;
+    this.reportedAt = reportedAt;
+    this.createdAt = createdAt;
+    this.version = version;
+  }
+
+  public static SafetyIncident report(
+      UUID commuteId, UUID workerId, String type, String description, Instant reportedAt) {
+    Objects.requireNonNull(commuteId);
+    Objects.requireNonNull(workerId);
+    require(description != null && !description.isBlank(), "Incident description is required");
+    var incident =
+        new SafetyIncident(
+            UUID.randomUUID(),
+            commuteId,
+            workerId,
+            type,
+            description.trim(),
+            "OPEN",
+            reportedAt,
+            Instant.now(),
+            0L);
+    incident.registerEvent(
+        new SafetyIncidentTriggeredEvent(
+            incident.id, commuteId, workerId, type, incident.description, reportedAt));
+    return incident;
+  }
+
   public static SafetyIncident create(
       UUID commuteId,
       UUID workerId,
@@ -29,36 +79,61 @@ public record SafetyIncident(
         status,
         reportedAt,
         Instant.now(),
-        0);
+        0L);
   }
 
-  public SafetyIncident withCommuteId(UUID value) {
+  public static SafetyIncident reconstitute(
+      UUID id,
+      UUID commuteId,
+      UUID workerId,
+      String type,
+      String description,
+      String status,
+      Instant reportedAt,
+      Instant createdAt,
+      long version) {
     return new SafetyIncident(
-        id, value, workerId, type, description, status, reportedAt, createdAt, version);
+        id, commuteId, workerId, type, description, status, reportedAt, createdAt, version);
   }
 
-  public SafetyIncident withWorkerId(UUID value) {
-    return new SafetyIncident(
-        id, commuteId, value, type, description, status, reportedAt, createdAt, version);
+  public void resolve() {
+    require("OPEN".equals(status), "Incident is already resolved");
+    this.status = "RESOLVED";
   }
 
-  public SafetyIncident withType(String value) {
-    return new SafetyIncident(
-        id, commuteId, workerId, value, description, status, reportedAt, createdAt, version);
+  public UUID getId() {
+    return id;
   }
 
-  public SafetyIncident withDescription(String value) {
-    return new SafetyIncident(
-        id, commuteId, workerId, type, value, status, reportedAt, createdAt, version);
+  public UUID getCommuteId() {
+    return commuteId;
   }
 
-  public SafetyIncident withStatus(String value) {
-    return new SafetyIncident(
-        id, commuteId, workerId, type, description, value, reportedAt, createdAt, version);
+  public UUID getWorkerId() {
+    return workerId;
   }
 
-  public SafetyIncident withReportedAt(Instant value) {
-    return new SafetyIncident(
-        id, commuteId, workerId, type, description, status, value, createdAt, version);
+  public String getType() {
+    return type;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public Instant getReportedAt() {
+    return reportedAt;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public long getVersion() {
+    return version;
   }
 }

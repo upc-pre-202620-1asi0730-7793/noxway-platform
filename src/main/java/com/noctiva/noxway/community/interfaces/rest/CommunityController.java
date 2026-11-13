@@ -1,39 +1,82 @@
 package com.noctiva.noxway.community.interfaces.rest;
 
-import com.noctiva.noxway.community.application.CommunityApplicationService;
-import com.noctiva.noxway.community.application.commands.CommunityCommands;
-import com.noctiva.noxway.community.domain.model.aggregates.*;
-import com.noctiva.noxway.shared.interfaces.rest.Pages;
+import com.noctiva.noxway.community.application.commands.CommunityCommands.DeleteCommunityPostCommand;
+import com.noctiva.noxway.community.application.commands.CommunityCommands.ResolveRiskZoneCommand;
+import com.noctiva.noxway.community.application.commandservices.CommunityCommandService;
+import com.noctiva.noxway.community.application.queries.CommunityQueries.*;
+import com.noctiva.noxway.community.application.queryservices.CommunityQueryService;
+import com.noctiva.noxway.community.interfaces.rest.resources.*;
+import com.noctiva.noxway.community.interfaces.rest.transform.CommunityRestAssembler;
+import com.noctiva.noxway.iam.interfaces.acl.IamContextFacade;
+import com.noctiva.noxway.shared.application.result.ApplicationError;
+import com.noctiva.noxway.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.time.Instant;
-import java.util.*;
-import org.springframework.http.HttpStatus;
+import java.util.Locale;
+import java.util.UUID;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/community")
+@Tag(
+    name = "Community & Safety Map",
+    description = "24/7 services directory, risk zones, trust voting, route ratings, and feed")
 public class CommunityController {
-  private final CommunityApplicationService service;
 
-  public CommunityController(CommunityApplicationService s) {
-    service = s;
+  private final CommunityCommandService commandService;
+  private final CommunityQueryService queryService;
+  private final IamContextFacade iamFacade;
+  private final ResponseEntityAssembler responseAssembler;
+
+  public CommunityController(
+      CommunityCommandService commandService,
+      CommunityQueryService queryService,
+      IamContextFacade iamFacade,
+      ResponseEntityAssembler responseAssembler) {
+    this.commandService = commandService;
+    this.queryService = queryService;
+    this.iamFacade = iamFacade;
+    this.responseAssembler = responseAssembler;
   }
 
   @PostMapping("/services")
-  @ResponseStatus(HttpStatus.CREATED)
-  public CommunityApplicationService.ServiceResource submit(
-      @Valid @RequestBody CommunityCommands.Service c) {
-    return service.submit(c);
+  @Operation(summary = "Submit a new night-shift service point with opening hours")
+  public ResponseEntity<?> submitService(
+      @Valid @RequestBody SubmitServicePointResource body,
+      HttpServletRequest request,
+      Locale locale) {
+    UUID reporterId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toCreated(
+        commandService.handle(CommunityRestAssembler.toCommand(reporterId, body)),
+        CommunityRestAssembler::toResource,
+        s -> URI.create("/api/v1/community/services/" + s.id()),
+        request,
+        locale);
   }
 
   @PutMapping("/services/{id}")
-  public CommunityApplicationService.ServiceResource update(
-      @PathVariable UUID id, @Valid @RequestBody CommunityCommands.Service c) {
-    return service.update(id, c);
+  @Operation(summary = "Update a submitted service point and re-queue for review")
+  public ResponseEntity<?> updateService(
+      @PathVariable UUID id,
+      @Valid @RequestBody SubmitServicePointResource body,
+      HttpServletRequest request,
+      Locale locale) {
+    UUID actorId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toOk(
+        commandService.handle(CommunityRestAssembler.toCommand(id, actorId, body)),
+        CommunityRestAssembler::toResource,
+        request,
+        locale);
   }
 
   @GetMapping("/services")
-  public Pages<CommunityApplicationService.ServiceResource> services(
+  @Operation(summary = "Search approved night-shift service points with open-now & radius filtering")
+  public ResponseEntity<?> listServices(
       @RequestParam(required = false) String type,
       @RequestParam(required = false) Instant at,
       @RequestParam(defaultValue = "false") boolean openOnly,
@@ -41,71 +84,168 @@ public class CommunityController {
       @RequestParam(required = false) Double longitude,
       @RequestParam(required = false) Double radiusKm,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
-    return Pages.of(service.list(type, at, openOnly, latitude, longitude, radiusKm), page, size);
+      @RequestParam(defaultValue = "20") int size,
+      HttpServletRequest request,
+      Locale locale) {
+    UUID viewerId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toOk(
+        queryService.handle(
+            new GetServicePointsQuery(
+                viewerId, type, at, openOnly, latitude, longitude, radiusKm, page, size)),
+        CommunityRestAssembler::toPagedServices,
+        request,
+        locale);
   }
 
   @GetMapping("/services/mine")
-  public List<CommunityApplicationService.ServiceResource> mine() {
-    return service.own();
+  @Operation(summary = "List service points submitted by current worker")
+  public ResponseEntity<?> myServices(HttpServletRequest request, Locale locale) {
+    UUID workerId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toOk(
+        queryService.handle(new GetMyServicePointsQuery(workerId)),
+        CommunityRestAssembler::toServiceResources,
+        request,
+        locale);
   }
 
   @GetMapping("/services/{id}")
-  public CommunityApplicationService.ServiceResource view(
-      @PathVariable UUID id, @RequestParam(required = false) Instant at) {
-    return service.view(id, at);
+  @Operation(summary = "View service point details and real-time open status")
+  public ResponseEntity<?> viewService(
+      @PathVariable UUID id,
+      @RequestParam(required = false) Instant at,
+      HttpServletRequest request,
+      Locale locale) {
+    var actor = iamFacade.resolveCurrentActor();
+    return responseAssembler.toOk(
+        queryService.handle(new GetServicePointByIdQuery(id, actor.id(), actor.isStaff(), at)),
+        CommunityRestAssembler::toResource,
+        request,
+        locale);
   }
 
   @PutMapping("/services/{id}/vote")
-  public ServiceVote vote(@PathVariable UUID id, @Valid @RequestBody CommunityCommands.Vote c) {
-    return service.vote(id, c.direction());
+  @Operation(summary = "Upvote (+1) or downvote (-1) an approved service point")
+  public ResponseEntity<?> voteService(
+      @PathVariable UUID id,
+      @Valid @RequestBody VoteServicePointResource body,
+      HttpServletRequest request,
+      Locale locale) {
+    UUID accountId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toOk(
+        commandService.handle(CommunityRestAssembler.toCommand(id, accountId, body)),
+        CommunityRestAssembler::toResource,
+        request,
+        locale);
   }
 
   @PostMapping("/risk-zones")
-  @ResponseStatus(HttpStatus.CREATED)
-  public RiskZone report(@Valid @RequestBody CommunityCommands.Risk c) {
-    return service.report(c);
+  @Operation(summary = "Report a new night risk zone for moderation")
+  public ResponseEntity<?> reportRisk(
+      @Valid @RequestBody ReportRiskZoneResource body,
+      HttpServletRequest request,
+      Locale locale) {
+    UUID reporterId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toCreated(
+        commandService.handle(CommunityRestAssembler.toCommand(reporterId, body)),
+        CommunityRestAssembler::toResource,
+        r -> URI.create("/api/v1/community/risk-zones/" + r.getId()),
+        request,
+        locale);
   }
 
   @GetMapping("/risk-zones")
-  public Pages<RiskZone> risks(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return Pages.of(service.riskZones(), page, size);
+  @Operation(summary = "List approved active risk zones")
+  public ResponseEntity<?> listRiskZones(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      HttpServletRequest request,
+      Locale locale) {
+    return responseAssembler.toOk(
+        queryService.handle(new GetApprovedRiskZonesQuery(page, size)),
+        CommunityRestAssembler::toPagedRisks,
+        request,
+        locale);
   }
 
   @PostMapping("/risk-zones/{id}/resolve")
-  public RiskZone resolve(@PathVariable UUID id) {
-    return service.resolveRisk(id);
+  @Operation(summary = "Resolve an active approved risk zone")
+  public ResponseEntity<?> resolveRisk(
+      @PathVariable UUID id, HttpServletRequest request, Locale locale) {
+    var actor = iamFacade.resolveCurrentActor();
+    if (iamFacade.isSecurityEnabled() && !actor.isStaff()) {
+      return responseAssembler.toErrorResponse(
+          new ApplicationError.ForbiddenError("Moderator role required"), request, locale);
+    }
+    return responseAssembler.toOk(
+        commandService.handle(new ResolveRiskZoneCommand(id, actor.id())),
+        CommunityRestAssembler::toResource,
+        request,
+        locale);
   }
 
   @PostMapping("/route-ratings")
-  @ResponseStatus(HttpStatus.CREATED)
-  public RouteRating rate(@Valid @RequestBody CommunityCommands.Rating c) {
-    return service.rate(c);
+  @Operation(summary = "Rate route safety after completing a commute")
+  public ResponseEntity<?> rateRoute(
+      @Valid @RequestBody RateRouteResource body, HttpServletRequest request, Locale locale) {
+    UUID workerId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toCreated(
+        commandService.handle(CommunityRestAssembler.toCommand(workerId, body)),
+        CommunityRestAssembler::toResource,
+        r -> URI.create("/api/v1/community/route-ratings/" + r.getId()),
+        request,
+        locale);
   }
 
   @GetMapping("/route-ratings/mine")
-  public List<RouteRating> ratings() {
-    return service.myRatings();
+  @Operation(summary = "List route ratings submitted by current worker")
+  public ResponseEntity<?> myRatings(HttpServletRequest request, Locale locale) {
+    UUID workerId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toOk(
+        queryService.handle(new GetMyRouteRatingsQuery(workerId)),
+        CommunityRestAssembler::toRatingResources,
+        request,
+        locale);
   }
 
   @PostMapping("/posts")
-  @ResponseStatus(HttpStatus.CREATED)
-  public CommunityPost post(@Valid @RequestBody CommunityCommands.Post c) {
-    return service.post(c);
+  @Operation(summary = "Publish a community feed post")
+  public ResponseEntity<?> createPost(
+      @Valid @RequestBody CreateCommunityPostResource body,
+      HttpServletRequest request,
+      Locale locale) {
+    UUID authorId = iamFacade.resolveCurrentActor().id();
+    return responseAssembler.toCreated(
+        commandService.handle(CommunityRestAssembler.toCommand(authorId, body)),
+        CommunityRestAssembler::toResource,
+        p -> URI.create("/api/v1/community/posts/" + p.getId()),
+        request,
+        locale);
   }
 
   @GetMapping("/posts")
-  public Pages<CommunityPost> posts(
+  @Operation(summary = "List community feed posts optionally filtered by district")
+  public ResponseEntity<?> listPosts(
       @RequestParam(required = false) String district,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
-    return Pages.of(service.posts(district), page, size);
+      @RequestParam(defaultValue = "20") int size,
+      HttpServletRequest request,
+      Locale locale) {
+    return responseAssembler.toOk(
+        queryService.handle(new GetCommunityPostsQuery(district, page, size)),
+        CommunityRestAssembler::toPagedPosts,
+        request,
+        locale);
   }
 
   @DeleteMapping("/posts/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable UUID id) {
-    service.deletePost(id);
+  @Operation(summary = "Delete a community post")
+  public ResponseEntity<?> deletePost(
+      @PathVariable UUID id, HttpServletRequest request, Locale locale) {
+    var actor = iamFacade.resolveCurrentActor();
+    return responseAssembler.toNoContent(
+        commandService.handle(
+            new DeleteCommunityPostCommand(id, actor.id(), actor.isStaff())),
+        request,
+        locale);
   }
 }

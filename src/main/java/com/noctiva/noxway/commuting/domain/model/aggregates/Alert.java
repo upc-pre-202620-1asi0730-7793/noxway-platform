@@ -1,19 +1,47 @@
 package com.noctiva.noxway.commuting.domain.model.aggregates;
 
+import static com.noctiva.noxway.shared.domain.Rules.require;
+
+import com.noctiva.noxway.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import java.time.Instant;
 import java.util.UUID;
 
-public record Alert(
-    UUID id,
-    UUID commuteId,
-    UUID incidentId,
-    UUID contactId,
-    String channel,
-    String status,
-    String message,
-    Instant deliveredAt,
-    Instant createdAt,
-    long version) {
+public class Alert extends AbstractDomainAggregateRoot<Alert> {
+
+  private final UUID id;
+  private final UUID commuteId;
+  private final UUID incidentId;
+  private final UUID contactId;
+  private final String channel;
+  private String status;
+  private final String message;
+  private Instant deliveredAt;
+  private final Instant createdAt;
+  private final long version;
+
+  private Alert(
+      UUID id,
+      UUID commuteId,
+      UUID incidentId,
+      UUID contactId,
+      String channel,
+      String status,
+      String message,
+      Instant deliveredAt,
+      Instant createdAt,
+      long version) {
+    this.id = id;
+    this.commuteId = commuteId;
+    this.incidentId = incidentId;
+    this.contactId = contactId;
+    this.channel = channel;
+    this.status = status;
+    this.message = message;
+    this.deliveredAt = deliveredAt;
+    this.createdAt = createdAt;
+    this.version = version;
+  }
+
   public static Alert create(
       UUID commuteId,
       UUID incidentId,
@@ -32,86 +60,79 @@ public record Alert(
         message,
         deliveredAt,
         Instant.now(),
-        0);
+        0L);
   }
 
-  public Alert withCommuteId(UUID value) {
+  public static Alert reconstitute(
+      UUID id,
+      UUID commuteId,
+      UUID incidentId,
+      UUID contactId,
+      String channel,
+      String status,
+      String message,
+      Instant deliveredAt,
+      Instant createdAt,
+      long version) {
     return new Alert(
-        id,
-        value,
-        incidentId,
-        contactId,
-        channel,
-        status,
-        message,
-        deliveredAt,
-        createdAt,
-        version);
+        id, commuteId, incidentId, contactId, channel, status, message, deliveredAt, createdAt, version);
   }
 
-  public Alert withIncidentId(UUID value) {
-    return new Alert(
-        id, commuteId, value, contactId, channel, status, message, deliveredAt, createdAt, version);
+  public void markDelivered(Instant deliveredAt) {
+    this.status = "DELIVERED";
+    this.deliveredAt = deliveredAt;
   }
 
-  public Alert withContactId(UUID value) {
-    return new Alert(
-        id,
-        commuteId,
-        incidentId,
-        value,
-        channel,
-        status,
-        message,
-        deliveredAt,
-        createdAt,
-        version);
+  public void markFailed() {
+    this.status = "FAILED";
   }
 
-  public Alert withChannel(String value) {
-    return new Alert(
-        id,
-        commuteId,
-        incidentId,
-        contactId,
-        value,
-        status,
-        message,
-        deliveredAt,
-        createdAt,
-        version);
+  public void markSuppressed() {
+    this.status = "SUPPRESSED";
   }
 
-  public Alert withStatus(String value) {
-    return new Alert(
-        id,
-        commuteId,
-        incidentId,
-        contactId,
-        channel,
-        value,
-        message,
-        deliveredAt,
-        createdAt,
-        version);
+  public void retry() {
+    require("FAILED".equals(status), "Only failed deliveries can be retried");
+    this.status = "PENDING_PROVIDER";
   }
 
-  public Alert withMessage(String value) {
-    return new Alert(
-        id,
-        commuteId,
-        incidentId,
-        contactId,
-        channel,
-        status,
-        value,
-        deliveredAt,
-        createdAt,
-        version);
+  public UUID getId() {
+    return id;
   }
 
-  public Alert withDeliveredAt(Instant value) {
-    return new Alert(
-        id, commuteId, incidentId, contactId, channel, status, message, value, createdAt, version);
+  public UUID getCommuteId() {
+    return commuteId;
+  }
+
+  public UUID getIncidentId() {
+    return incidentId;
+  }
+
+  public UUID getContactId() {
+    return contactId;
+  }
+
+  public String getChannel() {
+    return channel;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public Instant getDeliveredAt() {
+    return deliveredAt;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public long getVersion() {
+    return version;
   }
 }

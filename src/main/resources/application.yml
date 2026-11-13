@@ -1,35 +1,62 @@
 spring:
   application:
     name: noxway-platform
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/noxway}
-    username: ${DB_USERNAME:noxway}
+    username: ${DB_USER:noxway}
     password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
   jpa:
-    open-in-view: false
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
   jackson:
     deserialization:
       fail-on-unknown-properties: true
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_STARTTLS:true}
+
 server:
   port: ${PORT:8080}
-  error:
-    include-message: never
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-noxway:
-  cors-origins: ${CORS_ORIGINS:http://localhost:4200}
-  session-hours: ${SESSION_HOURS:8}
-  bootstrap-admin-email: ${ADMIN_EMAIL:}
-  bootstrap-admin-password: ${ADMIN_PASSWORD:}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+app:
+  security:
+    # IAM is structured in com.noctiva.noxway.iam and intentionally deferred while security is disabled.
+    enabled: ${APP_SECURITY_ENABLED:false}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+noxway:
+  mail-from: ${MAIL_FROM:noreply@example.invalid}
+  delivery-webhook-url: ${DELIVERY_WEBHOOK_URL:}
+  delivery-webhook-secret: ${DELIVERY_WEBHOOK_SECRET:}
+  auth-requests-per-minute: ${AUTH_RATE_LIMIT:30}
+  bootstrap-admin-email: ${BOOTSTRAP_ADMIN_EMAIL:}
+  bootstrap-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  default-worker-id: ${NOXWAY_DEFAULT_WORKER_ID:00000000-0000-0000-0000-000000000101}

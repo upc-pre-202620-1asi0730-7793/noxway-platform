@@ -1,40 +1,44 @@
 package com.noctiva.noxway.community.application.commands;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 public final class CommunityCommands {
-  public record Hours(
-      @Min(1) @Max(7) int dayOfWeek,
-      @NotBlank String opensAt,
-      @NotBlank String closesAt,
-      boolean closesNextDay,
-      boolean is24Hours) {}
+  private CommunityCommands() {}
 
-  public record Service(
-      @NotBlank @Size(max = 150) String name,
-      @Pattern(regexp = "PHARMACY|GAS_STATION|HOSPITAL|POLICE_STATION|OTHER") @NotNull String type,
+  public record OpeningIntervalInput(
+      int dayOfWeek, String opensAt, String closesAt, boolean closesNextDay, boolean is24Hours) {}
+
+  public record SubmitServicePointCommand(
+      UUID reportedBy,
+      String name,
+      String type,
       double latitude,
       double longitude,
-      @NotBlank String timeZone,
-      @NotEmpty @Size(max = 28) List<@Valid Hours> openingHours) {}
+      String timeZone,
+      List<OpeningIntervalInput> openingHours) {}
 
-  public record Risk(
-      @NotBlank @Size(max = 1000) String description,
-      @Pattern(regexp = "LOW|MEDIUM|HIGH") @NotNull String riskLevel,
+  public record UpdateServicePointCommand(
+      UUID serviceId,
+      UUID actorId,
+      String name,
+      String type,
       double latitude,
-      double longitude) {}
+      double longitude,
+      String timeZone,
+      List<OpeningIntervalInput> openingHours) {}
 
-  public record Rating(
-      @NotNull UUID commuteId,
-      @Min(1) @Max(5) int score,
-      @NotNull @Size(max = 1000) String comments) {}
+  public record VoteServicePointCommand(UUID serviceId, UUID accountId, int direction) {}
 
-  public record Post(
-      @NotBlank @Size(max = 150) String title,
-      @NotBlank @Size(max = 2000) String content,
-      @NotBlank @Size(max = 100) String district) {}
+  public record ReportRiskZoneCommand(
+      UUID reportedBy, String description, String riskLevel, double latitude, double longitude) {}
 
-  public record Vote(@Min(-1) @Max(1) int direction) {}
+  public record ResolveRiskZoneCommand(UUID riskId, UUID actorId) {}
+
+  public record RateRouteCommand(UUID commuteId, UUID workerId, int score, String comments) {}
+
+  public record CreateCommunityPostCommand(
+      UUID authorId, String title, String content, String district) {}
+
+  public record DeleteCommunityPostCommand(UUID postId, UUID actorId, boolean privileged) {}
 }
