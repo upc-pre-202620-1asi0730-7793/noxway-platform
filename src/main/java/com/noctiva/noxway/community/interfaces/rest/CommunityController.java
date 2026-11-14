@@ -8,6 +8,7 @@ import com.noctiva.noxway.community.application.queryservices.CommunityQueryServ
 import com.noctiva.noxway.community.interfaces.rest.resources.*;
 import com.noctiva.noxway.community.interfaces.rest.transform.CommunityRestAssembler;
 import com.noctiva.noxway.iam.interfaces.acl.IamContextFacade;
+import com.noctiva.noxway.profiles.interfaces.acl.ProfileDirectoryFacade;
 import com.noctiva.noxway.shared.application.result.ApplicationError;
 import com.noctiva.noxway.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,16 +32,19 @@ public class CommunityController {
   private final CommunityCommandService commandService;
   private final CommunityQueryService queryService;
   private final IamContextFacade iamFacade;
+  private final ProfileDirectoryFacade profileDirectory;
   private final ResponseEntityAssembler responseAssembler;
 
   public CommunityController(
       CommunityCommandService commandService,
       CommunityQueryService queryService,
       IamContextFacade iamFacade,
+      ProfileDirectoryFacade profileDirectory,
       ResponseEntityAssembler responseAssembler) {
     this.commandService = commandService;
     this.queryService = queryService;
     this.iamFacade = iamFacade;
+    this.profileDirectory = profileDirectory;
     this.responseAssembler = responseAssembler;
   }
 
@@ -147,7 +151,7 @@ public class CommunityController {
     UUID reporterId = iamFacade.resolveCurrentActor().id();
     return responseAssembler.toCreated(
         commandService.handle(CommunityRestAssembler.toCommand(reporterId, body)),
-        CommunityRestAssembler::toResource,
+        r -> CommunityRestAssembler.toResource(r, profileDirectory.findById(r.getReportedBy()).orElse(null)),
         r -> URI.create("/api/v1/community/risk-zones/" + r.getId()),
         request,
         locale);
@@ -178,7 +182,7 @@ public class CommunityController {
     }
     return responseAssembler.toOk(
         commandService.handle(new ResolveRiskZoneCommand(id, actor.id())),
-        CommunityRestAssembler::toResource,
+        r -> CommunityRestAssembler.toResource(r, profileDirectory.findById(r.getReportedBy()).orElse(null)),
         request,
         locale);
   }
@@ -216,7 +220,7 @@ public class CommunityController {
     UUID authorId = iamFacade.resolveCurrentActor().id();
     return responseAssembler.toCreated(
         commandService.handle(CommunityRestAssembler.toCommand(authorId, body)),
-        CommunityRestAssembler::toResource,
+        p -> CommunityRestAssembler.toResource(p, profileDirectory.findById(p.getAuthorId()).orElse(null)),
         p -> URI.create("/api/v1/community/posts/" + p.getId()),
         request,
         locale);

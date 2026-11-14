@@ -61,7 +61,8 @@ class DomainRulesTest {
   void validateCommunityPostOptionalCoordinatesAndCategory() {
     var noGeo =
         com.noctiva.noxway.community.domain.model.aggregates.CommunityPost.create(
-            UUID.randomUUID(), "Aviso", "Contenido", "Lince");
+            UUID.randomUUID(), "Aviso", "Contenido", null);
+    assertEquals("Lima", noGeo.getDistrict());
     assertNull(noGeo.getCategory());
     assertNull(noGeo.getLatitude());
     assertNull(noGeo.getLongitude());

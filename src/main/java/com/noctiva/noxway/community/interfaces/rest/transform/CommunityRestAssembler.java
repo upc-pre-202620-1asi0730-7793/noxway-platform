@@ -4,6 +4,7 @@ import com.noctiva.noxway.community.application.commands.CommunityCommands.*;
 import com.noctiva.noxway.community.application.queryservices.CommunityQueryService.*;
 import com.noctiva.noxway.community.domain.model.aggregates.*;
 import com.noctiva.noxway.community.interfaces.rest.resources.*;
+import com.noctiva.noxway.profiles.interfaces.acl.ProfileDirectoryFacade.AccountSummary;
 import com.noctiva.noxway.shared.interfaces.rest.resources.PagedResource;
 import java.util.List;
 import java.util.UUID;
@@ -104,10 +105,14 @@ public final class CommunityRestAssembler {
   }
 
   public static RiskZoneResource toResource(RiskZone r) {
+    return toResource(r, null);
+  }
+
+  public static RiskZoneResource toResource(RiskZone r, AccountSummary reporter) {
     return new RiskZoneResource(
         r.getId(),
         r.getReportedBy(),
-        "",
+        reporter != null ? reporter.fullName() : "",
         r.getDescription(),
         r.getRiskLevel(),
         r.getLatitude(),
@@ -152,11 +157,15 @@ public final class CommunityRestAssembler {
   }
 
   public static CommunityPostResource toResource(CommunityPost p) {
+    return toResource(p, null);
+  }
+
+  public static CommunityPostResource toResource(CommunityPost p, AccountSummary author) {
     return new CommunityPostResource(
         p.getId(),
         p.getAuthorId(),
-        "",
-        "WORKER",
+        author != null ? author.fullName() : "",
+        author != null ? author.role() : "WORKER",
         p.getTitle(),
         p.getContent(),
         p.getDistrict(),

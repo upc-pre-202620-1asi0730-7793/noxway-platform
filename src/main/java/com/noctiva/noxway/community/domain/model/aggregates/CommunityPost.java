@@ -59,7 +59,9 @@ public class CommunityPost extends AbstractDomainAggregateRoot<CommunityPost> {
     Objects.requireNonNull(authorId);
     require(title != null && !title.isBlank(), "Post title is required");
     require(content != null && !content.isBlank(), "Post content is required");
-    require(district != null && !district.isBlank(), "District is required");
+    String normalizedDistrict =
+        (district == null || district.isBlank()) ? "Lima" : district.trim();
+    require(normalizedDistrict.length() <= 100, "District must not exceed 100 characters");
     String normalizedCategory =
         (category == null || category.isBlank()) ? null : category.trim();
     if (normalizedCategory != null) {
@@ -76,7 +78,7 @@ public class CommunityPost extends AbstractDomainAggregateRoot<CommunityPost> {
         authorId,
         title.trim(),
         content.trim(),
-        district.trim(),
+        normalizedDistrict,
         normalizedCategory,
         latitude,
         longitude,

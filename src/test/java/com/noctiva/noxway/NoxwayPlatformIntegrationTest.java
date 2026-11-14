@@ -439,6 +439,7 @@ class NoxwayPlatformIntegrationTest {
                 "longitude", -77.0315),
             201);
     assertEquals("Aviso de seguridad", geoPost.get("category").asText());
+    assertFalse(geoPost.get("authorName").asText().isBlank());
     assertEquals(-12.0485, geoPost.get("latitude").asDouble(), 0.0001);
     assertEquals(-77.0315, geoPost.get("longitude").asDouble(), 0.0001);
 
