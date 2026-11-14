@@ -2,12 +2,12 @@
 
 ## 1. Pruebas automáticas
 
-Con JDK 21, abre la terminal en la raíz del proyecto.
+Con JDK 21+, abre la terminal en la raíz del proyecto.
 
 Windows PowerShell:
 
 ```powershell
-.\mvnw.cmd clean verify
+.\mvnw.cmd test
 ```
 
 macOS/Linux:
@@ -16,32 +16,29 @@ macOS/Linux:
 ./mvnw clean verify
 ```
 
-El resultado esperado es BUILD SUCCESS y 16 pruebas sin fallos ni errores. Incluyen reglas de dominio y llamadas HTTP mediante MockMvc con Spring, Flyway y repositorios reales sobre H2. No equivalen a probar PostgreSQL ni el frontend.
+El resultado esperado es `BUILD SUCCESS` y 22 pruebas sin fallos ni errores (`AggregateLifecycleTest`, `DomainRulesTest`, `GlobalExceptionHandlerTest`, `RepositoryAdaptersTest` y `NoxwayPlatformIntegrationTest`) ejecutadas con Spring Boot, Flyway y repositorios reales sobre H2 en modo PostgreSQL.
 
-## 2. Arranque
+## 2. Arranque local
 
-Ejecuta NoxwayApplication desde IntelliJ con perfil `local`, según README. Visita http://localhost:8080/actuator/health: debe mostrar `{"status":"UP"}`. Esto comprueba el arranque; no demuestra por sí solo todos los flujos.
+Ejecuta `NoxwayApplication` con perfil `local`:
 
-## 3. Prueba manual con Swagger
+```powershell
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+```
 
-Abre http://localhost:8080/swagger-ui.html. En cada operación pulsa Try it out y después Execute.
+Visita `http://localhost:8080/actuator/health`: debe mostrar `{"status":"UP"}`. La base H2 local persiste en `data/` y `BootstrapData` siembra planes, beneficios, cuentas de prueba y datos iniciales idempotentes.
 
-1. Registra un WORKER con POST /api/v1/auth/register usando el JSON del README. Puedes usar shiftType DAY o NIGHT. Usa un correo de prueba nuevo.
-2. Inicia sesión en POST /api/v1/auth/login con su correo y contraseña. Copia accessToken en Authorize (sin comillas).
-3. Consulta tu cuenta y crea un trayecto usando los esquemas y rutas de Swagger. El ETA debe ser futuro. Guarda su id.
-4. Registra ubicaciones durante el trayecto y marca llegada. Consulta el historial: debe reflejar el estado final.
-5. Registra un descanso con fecha/hora inicial y final; consulta el resumen. Una hora final anterior al inicio debe ser rechazada.
-6. Para verificar contactos, registra otra cuenta TRUSTED_CONTACT, envía una invitación desde el trabajador e inicia sesión como contacto para aceptarla. Cada cuenta usa su propio token. Comprueba acceso con consentimiento y denegación tras revocarlo.
-7. Cierra sesión y comprueba que el token anterior ya no permite acceder a recursos protegidos.
+## 3. Prueba manual con Swagger o Postman
 
-Las rutas completas y flujos están en API.md. También puedes importar noxway.postman_collection.json en Postman. Los recursos protegidos sin token deben responder 401; los datos inválidos deben producir un error de validación, no éxito.
+Abre `http://localhost:8080/swagger-ui.html`. En el estado actual (`app.security.enabled=false`), las peticiones operativas identifican al actor usando la cabecera `X-Actor-Id` (por defecto `00000000-0000-0000-0000-000000000101`).
 
-## 4. Persistencia y verificación pendiente
+1. Verifica `GET /api/v1/auth/status`: responde `200` indicando modo `STRUCTURED_PENDING_IMPLEMENTATION`. Los endpoints `/api/v1/auth/sign-*` responden `501` mientras IAM permanezca diferido.
+2. Consulta `GET /api/v1/accounts/directory` para ver las cuentas sembradas (`0101`, `0102`, `0201`, `0202`, `0901`).
+3. Crea un trayecto con `POST /api/v1/commutes` (ETA futuro), envía telemetría a `/api/v1/commutes/{id}/telemetry` y confirma llegada con `/api/v1/commutes/{id}/arrive`.
+4. Propón un punto de servicio en `POST /api/v1/community/services`, apruébalo cambiando `X-Actor-Id` a Admin (`...0901`) en `/api/v1/moderation/reports/{id}/decision`, y vota `+1`, `0` (retirar) o `-1`.
+5. Solicita una suscripción en `POST /api/v1/subscriptions` y concilia el pago offline como Admin (`...0901`) en `/api/v1/payments/{id}/confirm-offline` usando una referencia única.
+6. Importa `docs/noxway.postman_collection.json` en Postman para probar estos flujos.
 
-Detén y vuelve a iniciar la aplicación local desde la misma carpeta; los datos H2 se guardan en data/. Confirma que puedes iniciar sesión y consultar los registros anteriores. No subas esa carpeta al repositorio.
+## 4. Arquitectura de referencia
 
-Antes de la entrega: repetir los flujos con PostgreSQL, conectar el frontend a /api/v1, probar ambos juntos, desplegar y recoger evidencias reales. Correo/SMS/WhatsApp requieren proveedores configurados; no se consideran enviados por el simple hecho de crear una alerta.
-
-## Referencia de los ejemplos del curso
-
-Se usaron los proyectos catch-up y learning-center compartidos como referencia de capas, dominio independiente de persistencia, repositorios, adaptadores, entidades JPA, mappers y controladores REST. Los bounded contexts y reglas se adaptaron al reporte de Noxway. No es una copia exacta: se añadieron seguridad, migraciones Flyway, pruebas y configuración H2/PostgreSQL; las versiones y decisiones técnicas tampoco son idénticas a todos los ejemplos. Los comandos de aplicación se agrupan por contexto y los servicios de aplicación reúnen consultas y comandos, en vez de reproducir cada clase del ejemplo.
+La solución sigue la arquitectura de 4 capas (`domain`, `application`, `infrastructure`, `interfaces`), CQRS ligero (`CommandService`/`QueryService`), ensambladores REST/JPA dedicados, mapeo JPA aislado de agregados de dominio, bloqueo optimista vía `OptimisticJpaSaveSupport`, migraciones Flyway (`V1`–`V5` con 6 esquemas y 29 tablas) y manejo global de errores RFC 9457 i18n.
