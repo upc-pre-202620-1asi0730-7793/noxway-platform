@@ -4,6 +4,11 @@ spring:
     driver-class-name: ${TEST_DB_DRIVER:org.h2.Driver}
     username: ${TEST_DB_USERNAME:sa}
     password: ${TEST_DB_PASSWORD:}
+
+app:
+  security:
+    enabled: false
+
 noxway:
   auth-requests-per-minute: 1000
   bootstrap-admin-email: admin@noxway.test

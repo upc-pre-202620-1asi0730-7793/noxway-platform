@@ -14,14 +14,15 @@ public final class OpeningHours {
     try {
       var a = LocalTime.parse(opens);
       var b = LocalTime.parse(closes);
-      if (full)
+      if (full) {
         require(
             a.equals(LocalTime.MIDNIGHT) && b.equals(LocalTime.MIDNIGHT) && !next,
             "24-hour interval must use 00:00/00:00 without closesNextDay");
-      else
+      } else {
         require(
             next ? b.isBefore(a) || b.equals(a) : b.isAfter(a),
             "Invalid interval; mark closesNextDay for overnight opening");
+      }
     } catch (DateTimeException | NullPointerException e) {
       throw new com.noctiva.noxway.shared.domain.RuleViolation("Use HH:mm opening times");
     }
@@ -33,15 +34,20 @@ public final class OpeningHours {
     for (var h : hours) {
       for (int daysBack = 0; daysBack <= 1; daysBack++) {
         var d = date.minusDays(daysBack);
-        if (d.getDayOfWeek().getValue() != h.dayOfWeek()) continue;
-        var start = d.atTime(LocalTime.parse(h.opensAt())).atZone(ZoneId.of(zone)).toInstant();
+        if (d.getDayOfWeek().getValue() != h.getDayOfWeek()) {
+          continue;
+        }
+        var start = d.atTime(LocalTime.parse(h.getOpensAt())).atZone(ZoneId.of(zone)).toInstant();
         var end =
             (h.is24Hours()
                     ? d.plusDays(1).atStartOfDay()
-                    : d.plusDays(h.closesNextDay() ? 1 : 0).atTime(LocalTime.parse(h.closesAt())))
+                    : d.plusDays(h.isClosesNextDay() ? 1 : 0)
+                        .atTime(LocalTime.parse(h.getClosesAt())))
                 .atZone(ZoneId.of(zone))
                 .toInstant();
-        if (!at.isBefore(start) && at.isBefore(end)) return true;
+        if (!at.isBefore(start) && at.isBefore(end)) {
+          return true;
+        }
       }
     }
     return false;

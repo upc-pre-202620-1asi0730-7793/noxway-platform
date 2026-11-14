@@ -1,0 +1,49 @@
+package com.noctiva.noxway.iam.infrastructure.authorization.sfs.configuration;
+
+import java.util.List;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+
+/**
+ * Permissive security configuration active while IAM implementation is deferred ({@code app.security.enabled=false}).
+ * Mirrors the learning-center reference pattern so all business contexts remain functional without blocking auth.
+ */
+@Configuration
+@EnableWebSecurity
+@ConditionalOnProperty(name = "app.security.enabled", havingValue = "false", matchIfMissing = true)
+public class NoSecurityConfiguration {
+
+  @Bean
+  public SecurityFilterChain noSecurityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(AbstractHttpConfigurer::disable)
+        .cors(
+            cors ->
+                cors.configurationSource(
+                    request -> {
+                      var configuration = new CorsConfiguration();
+                      configuration.setAllowedOriginPatterns(List.of("*"));
+                      configuration.setAllowedMethods(
+                          List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                      configuration.setAllowedHeaders(List.of("*"));
+                      return configuration;
+                    }))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+    return http.build();
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+}

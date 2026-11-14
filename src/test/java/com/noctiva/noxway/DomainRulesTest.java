@@ -56,4 +56,37 @@ class DomainRulesTest {
         RuntimeException.class, () -> OpeningHours.validate(8, "00:00", "00:00", false, true));
     assertFalse(OpeningHours.isOpen(List.of(), "America/Lima", Instant.now()));
   }
+
+  @Test
+  void validateCommunityPostOptionalCoordinatesAndCategory() {
+    var noGeo =
+        com.noctiva.noxway.community.domain.model.aggregates.CommunityPost.create(
+            UUID.randomUUID(), "Aviso", "Contenido", "Lince");
+    assertNull(noGeo.getCategory());
+    assertNull(noGeo.getLatitude());
+    assertNull(noGeo.getLongitude());
+
+    var withGeo =
+        com.noctiva.noxway.community.domain.model.aggregates.CommunityPost.create(
+            UUID.randomUUID(),
+            "Poste apagado",
+            "Cuadra oscura",
+            "Lince",
+            "  Aviso de seguridad ",
+            -12.0849,
+            -77.0358);
+    assertEquals("Aviso de seguridad", withGeo.getCategory());
+    assertEquals(-12.0849, withGeo.getLatitude());
+
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            com.noctiva.noxway.community.domain.model.aggregates.CommunityPost.create(
+                UUID.randomUUID(), "Solo lat", "Desc", "Lince", "Aviso", -12.05, null));
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            com.noctiva.noxway.community.domain.model.aggregates.CommunityPost.create(
+                UUID.randomUUID(), "Out of bounds", "Desc", "Lince", "Aviso", 95.0, -77.0));
+  }
 }

@@ -1,20 +1,34 @@
 package com.noctiva.noxway.subscriptions.application.commands;
 
-import jakarta.validation.constraints.*;
 import java.util.UUID;
 
 public final class SubscriptionCommands {
-  public record Subscribe(@NotNull UUID planId) {}
+  private SubscriptionCommands() {}
 
-  public record Payment(@NotBlank @Size(max = 150) String reference) {}
+  public record SubscribeCommand(UUID workerId, UUID planId) {}
 
-  public record InviteSubscriptionMember(@Email @NotBlank String workerEmail) {}
+  public record CancelSubscriptionCommand(UUID subscriptionId, UUID actorId) {}
 
-  public record Referral(@NotBlank String code) {}
+  public record RequestPaymentCommand(UUID subscriptionId, UUID actorId) {}
 
-  public record Benefit(
-      @NotBlank @Size(max = 150) String name,
-      @NotBlank @Size(max = 1500) String description,
-      @NotBlank String planCode,
-      boolean active) {}
+  public record ConfirmOfflinePaymentCommand(UUID paymentId, String reference, UUID actorId) {}
+
+  public record RejectPaymentCommand(UUID paymentId, UUID actorId) {}
+
+  public record CreateBenefitCommand(String name, String description, String planCode) {}
+
+  public record ClaimBenefitCommand(UUID benefitId, UUID workerId) {}
+
+  public record GetOrCreateReferralCodeCommand(UUID workerId) {}
+
+  public record UseReferralCodeCommand(UUID workerId, String code) {}
+
+  public record RedeemReferralRewardCommand(UUID rewardId, UUID workerId) {}
+
+  public record InviteSubscriptionMemberCommand(
+      UUID subscriptionId, UUID actorId, String workerEmail) {}
+
+  public record RespondInvitationCommand(UUID memberId, UUID actorId, boolean accept) {}
+
+  public record RevokeSubscriptionMemberCommand(UUID memberId, UUID actorId) {}
 }

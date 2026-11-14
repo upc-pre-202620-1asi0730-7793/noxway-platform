@@ -1,6 +1,14 @@
 spring:
   datasource:
-    url: jdbc:h2:file:./data/noxway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    url: jdbc:h2:file:./data/noxway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
+app:
+  security:
+    enabled: false
+
+noxway:
+  bootstrap-admin-email: admin@noxway.test
+  bootstrap-admin-password: LocalAdminPassword!2026

@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Noxway API — Sprint 3",
+    "name": "Noxway Platform API (/api/v1)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -9,8 +9,16 @@
       "value": "http://localhost:8080/api/v1"
     },
     {
-      "key": "token",
-      "value": ""
+      "key": "actorId",
+      "value": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+      "key": "adminId",
+      "value": "00000000-0000-0000-0000-000000000901"
+    },
+    {
+      "key": "contactId",
+      "value": "00000000-0000-0000-0000-000000000201"
     },
     {
       "key": "commuteId",
@@ -21,77 +29,26 @@
       "value": ""
     }
   ],
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
-    ]
-  },
   "item": [
     {
-      "name": "Register worker",
+      "name": "IAM status (deferred)",
       "request": {
-        "method": "POST",
-        "url": "{{baseUrl}}/auth/register",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"worker@example.com\",\n  \"password\": \"A-long-password!2026\",\n  \"fullName\": \"Yam Cano\",\n  \"phone\": \"987654321\",\n  \"role\": \"WORKER\",\n  \"shiftType\": \"NIGHT\",\n  \"shiftStart\": \"22:00\",\n  \"shiftEnd\": \"06:00\",\n  \"timeZone\": \"America/Lima\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "auth": {
-          "type": "noauth"
-        }
+        "method": "GET",
+        "url": "{{baseUrl}}/auth/status"
       }
     },
     {
-      "name": "Login",
+      "name": "Account directory",
       "request": {
-        "method": "POST",
-        "url": "{{baseUrl}}/auth/login",
+        "method": "GET",
+        "url": "{{baseUrl}}/accounts/directory",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"worker@example.com\",\n  \"password\": \"A-long-password!2026\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "auth": {
-          "type": "noauth"
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "if (pm.response.code === 200) pm.collectionVariables.set(\"token\", pm.response.json().accessToken);"
-            ]
-          }
-        }
-      ]
+        ]
+      }
     },
     {
       "name": "My account",
@@ -100,8 +57,8 @@
         "url": "{{baseUrl}}/accounts/me",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ]
       }
@@ -115,16 +72,15 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"contactEmail\": \"contact@example.com\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "raw": "{\n  \"contactEmail\": \"miguel.quispe@noxway.pe\"\n}"
         }
       }
     },
@@ -135,8 +91,8 @@
         "url": "{{baseUrl}}/trust-links",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ]
       }
@@ -148,8 +104,8 @@
         "url": "{{baseUrl}}/trust-links/{{trustLinkId}}/accept",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{contactId}}"
           }
         ]
       }
@@ -161,8 +117,8 @@
         "url": "{{baseUrl}}/commutes",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ]
       }
@@ -171,11 +127,11 @@
       "name": "Confirm arrival",
       "request": {
         "method": "POST",
-        "url": "{{baseUrl}}/commutes/{{commuteId}}/arrival",
+        "url": "{{baseUrl}}/commutes/{{commuteId}}/arrive",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ]
       }
@@ -187,8 +143,8 @@
         "url": "{{baseUrl}}/community/services?openOnly=true",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ]
       }
@@ -200,8 +156,8 @@
         "url": "{{baseUrl}}/wellness/summary?timeZone=America/Lima",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{actorId}}"
           }
         ]
       }
@@ -210,24 +166,18 @@
       "name": "Plans",
       "request": {
         "method": "GET",
-        "url": "{{baseUrl}}/plans",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ]
+        "url": "{{baseUrl}}/plans"
       }
     },
     {
-      "name": "Alerts",
+      "name": "Companion alerts",
       "request": {
         "method": "GET",
-        "url": "{{baseUrl}}/alerts",
+        "url": "{{baseUrl}}/companion/alerts",
         "header": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "key": "X-Actor-Id",
+            "value": "{{contactId}}"
           }
         ]
       }
