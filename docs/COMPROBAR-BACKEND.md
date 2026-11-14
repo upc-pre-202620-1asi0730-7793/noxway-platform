@@ -16,7 +16,7 @@ macOS/Linux:
 ./mvnw clean verify
 ```
 
-El resultado esperado es `BUILD SUCCESS` y 21 pruebas sin fallos ni errores (`AggregateLifecycleTest`, `DomainRulesTest`, `GlobalExceptionHandlerTest`, `RepositoryAdaptersTest` y `NoxwayPlatformIntegrationTest`) ejecutadas con Spring Boot, Flyway y repositorios reales sobre H2 en modo PostgreSQL.
+El resultado esperado es `BUILD SUCCESS` y 22 pruebas sin fallos ni errores (`AggregateLifecycleTest`, `DomainRulesTest`, `GlobalExceptionHandlerTest`, `RepositoryAdaptersTest` y `NoxwayPlatformIntegrationTest`) ejecutadas con Spring Boot, Flyway y repositorios reales sobre H2 en modo PostgreSQL.
 
 ## 2. Arranque local
 
@@ -41,4 +41,4 @@ Abre `http://localhost:8080/swagger-ui.html`. En el estado actual (`app.security
 
 ## 4. Arquitectura de referencia
 
-La solución sigue la arquitectura de 4 capas (`domain`, `application`, `infrastructure`, `interfaces`), CQRS ligero (`CommandService`/`QueryService`), ensambladores REST/JPA dedicados, mapeo JPA aislado de agregados de dominio, bloqueo optimista vía `OptimisticJpaSaveSupport`, migraciones Flyway (`V1`–`V4`) y manejo global de errores RFC 9457 i18n.
+La solución sigue la arquitectura de 4 capas (`domain`, `application`, `infrastructure`, `interfaces`), CQRS ligero (`CommandService`/`QueryService`), ensambladores REST/JPA dedicados, mapeo JPA aislado de agregados de dominio, bloqueo optimista vía `OptimisticJpaSaveSupport`, migraciones Flyway (`V1`–`V5` con 6 esquemas y 29 tablas) y manejo global de errores RFC 9457 i18n.

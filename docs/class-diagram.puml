@@ -1,0 +1,575 @@
+@startuml
+' Noxway Platform - Domain & Layered Class Diagram
+' Architecture: Modular Monolith with Layered Domain-Driven Design (DDD) & CQRS
+' Technology Stack: Java 21, Spring Boot 3.5.7, Flyway, PostgreSQL / H2, RFC 9457
+
+title
+  <b>Noxway Platform - Domain & Layered Class Diagram</b>
+  <i>Architecture: Modular Monolith with 4-Layer Domain-Driven Design (DDD) & CQRS</i>
+  <i>Runtime: Java 21 | Spring Boot 3.5.7 | Flyway (6 Schemas, 29 Tables) | RFC 9457 Problem Details</i>
+end title
+
+header Noxway Platform - Architecture & Domain Model
+footer Page %page% of %lastpage% - Modular Monolith with Layered DDD
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam handwritten false
+skinparam roundcorner 5
+skinparam dpi 150
+skinparam wrapWidth 210
+skinparam maxMessageSize 150
+left to right direction
+
+skinparam class {
+  BackgroundColor White
+  ArrowColor #2C3E50
+  BorderColor #2C3E50
+}
+skinparam class<<aggregate>> {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+}
+skinparam class<<entity>> {
+  BackgroundColor #E8F5E9
+  BorderColor #2E7D32
+}
+skinparam class<<value object>> {
+  BackgroundColor #FFF3E0
+  BorderColor #E65100
+}
+skinparam class<<record>> {
+  BackgroundColor #FFF8E1
+  BorderColor #F57F17
+}
+skinparam class<<controller>> {
+  BackgroundColor #FFFDE7
+  BorderColor #FBC02D
+}
+skinparam class<<service>> {
+  BackgroundColor #F3E5F5
+  BorderColor #7B1FA2
+}
+skinparam class<<repository>> {
+  BackgroundColor #FCE4EC
+  BorderColor #C2185B
+}
+skinparam class<<adapter>> {
+  BackgroundColor #ECEFF1
+  BorderColor #455A64
+}
+skinparam class<<facade>> {
+  BackgroundColor #E0F7FA
+  BorderColor #00838F
+}
+
+legend right
+  |= Stereotype |= Classification |= Layer |
+  |<back:#E3F2FD> <<aggregate>> </back> | Aggregate Root (Encapsulated) | Domain Layer |
+  |<back:#E8F5E9> <<entity>> </back> | Domain Entity | Domain Layer |
+  |<back:#FFF3E0> <<value object>> </back> | Tactical Value Object | Domain Layer |
+  |<back:#FFF8E1> <<record>> </back> | Immutable Java Record (Command/Query/Resource) | Application / Interfaces |
+  |<back:#F3E5F5> <<service>> </back> | Command / Query Service (CQRS) | Application Layer |
+  |<back:#FCE4EC> <<repository>> </back> | Domain Repository Port | Domain Layer |
+  |<back:#ECEFF1> <<adapter>> </back> | Infrastructure Adapter (JPA / Mail / Security) | Infrastructure Layer |
+  |<back:#FFFDE7> <<controller>> </back> | REST Controller (/api/v1/*) | Interfaces Layer |
+  |<back:#E0F7FA> <<facade>> </back> | Anti-Corruption Layer (ACL) | Interfaces / Application |
+endlegend
+
+' ============================================================
+' 1. SHARED KERNEL (com.noctiva.noxway.shared)
+' ============================================================
+package "com.noctiva.noxway.shared" {
+  package "domain" {
+    abstract class "AbstractDomainAggregateRoot<T>" as AbstractDomainAggregateRoot <<aggregate>> {
+      -domainEvents: List<Object>
+      #registerEvent(event: Object): void
+      +domainEvents(): List<Object>
+      +clearDomainEvents(): void
+    }
+
+    class Coordinate <<value object>> {
+      +latitude: double
+      +longitude: double
+      +distanceKmTo(lat: double, lng: double): double
+    }
+
+    class EmailAddress <<value object>> {
+      +value: String
+    }
+
+    class TimeWindow <<value object>> {
+      +start: String
+      +end: String
+    }
+  }
+
+  package "application.result" {
+    interface "Result<T, E>" as Result <<record>> {
+      +{static} success(value: T): Result<T, E>
+      +{static} failure(error: E): Result<T, E>
+    }
+
+    interface ApplicationError <<record>> {
+      +code(): String
+      +message(): String
+    }
+  }
+
+  package "infrastructure.persistence.jpa" {
+    class OptimisticJpaSaveSupport <<adapter>> {
+      +saveAndFlush(repo: JpaRepository, entity: E): E
+    }
+  }
+
+  package "interfaces.rest" {
+    class GlobalExceptionHandler <<controller>> {
+      +handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail>
+      +handleRuleViolation(ex: RuleViolation): ResponseEntity<ProblemDetail>
+    }
+
+    class ResponseEntityAssembler <<adapter>> {
+      +toOk(result: Result, mapper: Function): ResponseEntity<?>
+      +toCreated(result: Result, mapper: Function, locationFn: Function): ResponseEntity<?>
+    }
+  }
+}
+
+' ============================================================
+' 2. IAM BOUNDED CONTEXT (com.noctiva.noxway.iam)
+' ============================================================
+package "com.noctiva.noxway.iam" {
+  package "domain.model" {
+    class AuthSession <<aggregate>> {
+      -id: UUID
+      -accountId: UUID
+      -tokenHash: String
+      -expiresAt: Instant
+      -revoked: boolean
+      -version: long
+      +{static} create(accountId: UUID, tokenHash: String, expiresAt: Instant): AuthSession
+      +revoke(): void
+    }
+
+    class PasswordResetToken <<aggregate>> {
+      -id: UUID
+      -accountId: UUID
+      -tokenHash: String
+      -expiresAt: Instant
+      -used: boolean
+      -version: long
+      +{static} issue(accountId: UUID, tokenHash: String, expiresAt: Instant): PasswordResetToken
+      +markUsed(): void
+    }
+
+    class Actor <<value object>> {
+      +id: UUID
+      +role: String
+      +isStaff(): boolean
+    }
+  }
+
+  package "interfaces" {
+    interface IamContextFacade <<facade>> {
+      +resolveCurrentActor(): Actor
+      +isSecurityEnabled(): boolean
+      +defaultWorkerId(): UUID
+    }
+
+    class AuthController <<controller>> {
+      +status(): ResponseEntity<AuthStatusResource>
+      +signIn(body: SignInResource): ResponseEntity<?>
+      +signUp(body: SignUpResource): ResponseEntity<?>
+      +signOut(): ResponseEntity<?>
+      +passwordReset(body: PasswordResetRequestResource): ResponseEntity<?>
+    }
+  }
+}
+
+' ============================================================
+' 3. PROFILES & TRUST NETWORK (com.noctiva.noxway.profiles)
+' ============================================================
+package "com.noctiva.noxway.profiles" {
+  package "domain.model.aggregates" {
+    class UserAccount <<aggregate>> {
+      -id: UUID
+      -email: String
+      -passwordHash: String
+      -fullName: String
+      -phone: String
+      -role: String
+      -shiftType: String
+      -shiftStart: String
+      -shiftEnd: String
+      -timeZone: String
+      -active: boolean
+      -version: long
+      +{static} create(...): UserAccount
+      +updateProfile(fullName: String, phone: String, shiftType: String, shiftStart: String, shiftEnd: String, timeZone: String): void
+    }
+
+    class TrustLink <<aggregate>> {
+      -id: UUID
+      -workerId: UUID
+      -contactId: UUID
+      -status: String
+      -version: long
+      +{static} invite(workerId: UUID, contactId: UUID): TrustLink
+      +accept(actorId: UUID): void
+      +reject(actorId: UUID): void
+      +revoke(actorId: UUID): void
+      +reInvite(): void
+    }
+
+    class NotificationPreference <<aggregate>> {
+      -id: UUID
+      -accountId: UUID
+      -channel: String
+      -enabled: boolean
+      -priorityStart: String
+      -priorityEnd: String
+      -timeZone: String
+      -version: long
+      +update(enabled: boolean, start: String, end: String, tz: String): void
+    }
+  }
+
+  package "domain.repositories" {
+    interface UserAccountRepository <<repository>>
+    interface TrustLinkRepository <<repository>>
+    interface NotificationPreferenceRepository <<repository>>
+  }
+
+  package "application" {
+    interface ProfileCommandService <<service>>
+    interface ProfileQueryService <<service>>
+  }
+
+  package "interfaces" {
+    interface ProfileDirectoryFacade <<facade>> {
+      +findById(accountId: UUID): Optional<AccountSummary>
+      +findByEmail(email: String): Optional<AccountSummary>
+      +findActiveContactIdsForWorker(workerId: UUID): List<UUID>
+      +findActiveWorkerIdsForContact(contactId: UUID): List<UUID>
+    }
+    class AccountsController <<controller>>
+    class TrustLinksController <<controller>>
+  }
+}
+
+' ============================================================
+' 4. COMMUTING & COMPANION ALERTS (com.noctiva.noxway.commuting)
+' ============================================================
+package "com.noctiva.noxway.commuting" {
+  package "domain.model.aggregates" {
+    class Commute <<aggregate>> {
+      -id: UUID
+      -workerId: UUID
+      -origin: String
+      -destination: String
+      -transport: String
+      -startTime: Instant
+      -estimatedArrivalTime: Instant
+      -toleranceMinutes: int
+      -arrivalTime: Instant
+      -status: String
+      -overdueAlertSent: boolean
+      -version: long
+      +{static} start(...): Commute
+      +delay(additionalMinutes: int): void
+      +markOverdue(): void
+      +arrive(arrivedAt: Instant): void
+    }
+
+    class TelemetryPing <<aggregate>> {
+      -id: UUID
+      -commuteId: UUID
+      -latitude: double
+      -longitude: double
+      -speed: double
+      -recordedAt: Instant
+      +{static} record(commuteId: UUID, lat: double, lng: double, speed: double, at: Instant): TelemetryPing
+    }
+
+    class SafetyIncident <<aggregate>> {
+      -id: UUID
+      -commuteId: UUID
+      -workerId: UUID
+      -type: String
+      -description: String
+      -status: String
+      -resolvedAt: Instant
+      -version: long
+      +{static} report(commuteId: UUID, workerId: UUID, type: String, description: String): SafetyIncident
+      +resolve(resolvedAt: Instant): void
+    }
+
+    class AlertNotification <<aggregate>> {
+      -id: UUID
+      -commuteId: UUID
+      -incidentId: UUID
+      -workerId: UUID
+      -contactId: UUID
+      -channel: String
+      -message: String
+      -status: String
+      -attempts: int
+      -version: long
+      +markDelivered(at: Instant): void
+      +markFailed(error: String, nextRetryAt: Instant): void
+    }
+  }
+
+  package "application" {
+    interface CommuteCommandService <<service>>
+    interface CommuteQueryService <<service>>
+  }
+
+  package "interfaces" {
+    interface CommuteVerificationFacade <<facade>> {
+      +isArrivedCommuteOwnedByWorker(commuteId: UUID, workerId: UUID): boolean
+    }
+    class CommutingController <<controller>>
+  }
+}
+
+' ============================================================
+' 5. COMMUNITY & 24H MAP (com.noctiva.noxway.community)
+' ============================================================
+package "com.noctiva.noxway.community" {
+  package "domain.model.aggregates" {
+    class ServicePoint <<aggregate>> {
+      -id: UUID
+      -name: String
+      -type: String
+      -latitude: double
+      -longitude: double
+      -timeZone: String
+      -status: String
+      -trustScore: int
+      -reportedBy: UUID
+      -version: long
+      +{static} submit(...): ServicePoint
+      +updateDetails(...): void
+      +applyModerationDecision(approved: boolean): void
+      +recalculateTrustScore(score: int): void
+    }
+
+    class ServiceOpeningInterval <<aggregate>> {
+      -id: UUID
+      -serviceId: UUID
+      -dayOfWeek: int
+      -opensAt: String
+      -closesAt: String
+      -closesNextDay: boolean
+      -open24Hours: boolean
+    }
+
+    class ServiceVote <<aggregate>> {
+      -id: UUID
+      -serviceId: UUID
+      -accountId: UUID
+      -direction: int
+      -version: long
+    }
+
+    class RiskZone <<aggregate>> {
+      -id: UUID
+      -reportedBy: UUID
+      -description: String
+      -riskLevel: String
+      -latitude: double
+      -longitude: double
+      -status: String
+      -version: long
+      +{static} report(...): RiskZone
+      +resolve(): void
+    }
+
+    class RouteRating <<aggregate>> {
+      -id: UUID
+      -commuteId: UUID
+      -workerId: UUID
+      -score: int
+      -comments: String
+    }
+
+    class CommunityPost <<aggregate>> {
+      -id: UUID
+      -authorId: UUID
+      -title: String
+      -content: String
+      -district: String
+      -category: String
+      -latitude: Double
+      -longitude: Double
+      -createdAt: Instant
+      -version: long
+      +{static} create(authorId: UUID, title: String, content: String, district: String, category: String, lat: Double, lng: Double): CommunityPost
+    }
+  }
+
+  package "application" {
+    interface CommunityCommandService <<service>>
+    interface CommunityQueryService <<service>>
+  }
+
+  package "interfaces" {
+    interface CommunityTargetGovernanceFacade <<facade>>
+    class CommunityController <<controller>>
+  }
+}
+
+' ============================================================
+' 6. WELLNESS & SLEEP (com.noctiva.noxway.wellness)
+' ============================================================
+package "com.noctiva.noxway.wellness" {
+  package "domain.model.aggregates" {
+    class RestSession <<aggregate>> {
+      -id: UUID
+      -workerId: UUID
+      -startTime: Instant
+      -endTime: Instant
+      -durationMinutes: long
+      -quality: int
+      -notes: String
+      -version: long
+      +{static} log(workerId: UUID, start: Instant, end: Instant, quality: int, notes: String): RestSession
+    }
+
+    class SleepGoal <<aggregate>> {
+      -workerId: UUID
+      -targetMinutes: int
+      -version: long
+      +updateTarget(minutes: int): void
+    }
+  }
+
+  package "application" {
+    interface WellnessCommandService <<service>>
+    interface WellnessQueryService <<service>>
+  }
+
+  package "interfaces" {
+    class WellnessController <<controller>>
+  }
+}
+
+' ============================================================
+' 7. SUBSCRIPTIONS, OFFLINE PAYMENTS & REFERRALS (com.noctiva.noxway.subscriptions)
+' ============================================================
+package "com.noctiva.noxway.subscriptions" {
+  package "domain.model.aggregates" {
+    class SubscriptionPlan <<aggregate>> {
+      -id: UUID
+      -code: String
+      -name: String
+      -monthlyPrice: BigDecimal
+      -maxContacts: int
+      -maxWorkers: int
+    }
+
+    class Subscription <<aggregate>> {
+      -id: UUID
+      -ownerId: UUID
+      -planId: UUID
+      -status: String
+      -startsAt: Instant
+      -endsAt: Instant
+      -version: long
+      +activate(now: Instant): void
+      +extendDays(days: int): void
+      +cancel(): void
+    }
+
+    class SubscriptionMember <<aggregate>> {
+      -id: UUID
+      -subscriptionId: UUID
+      -workerId: UUID
+      -status: String
+      -version: long
+      +accept(): void
+      +reject(): void
+      +revoke(): void
+    }
+
+    class SubscriptionPayment <<aggregate>> {
+      -id: UUID
+      -subscriptionId: UUID
+      -workerId: UUID
+      -amount: BigDecimal
+      -currency: String
+      -status: String
+      -reference: String
+      -version: long
+      +confirmOffline(reference: String, confirmedBy: UUID): void
+      +reject(rejectedBy: UUID): void
+    }
+
+    class CollectiveBenefit <<aggregate>>
+    class BenefitClaim <<aggregate>>
+    class ReferralCode <<aggregate>>
+    class ReferralRedemption <<aggregate>>
+    class ReferralReward <<aggregate>>
+  }
+
+  package "interfaces" {
+    interface SubscriptionAllowanceFacade <<facade>> {
+      +maxAllowedContactsForWorker(workerId: UUID): int
+    }
+    class SubscriptionsController <<controller>>
+  }
+}
+
+' ============================================================
+' 8. MODERATION & GOVERNANCE (com.noctiva.noxway.moderation)
+' ============================================================
+package "com.noctiva.noxway.moderation" {
+  package "domain.model.aggregates" {
+    class ModerationReport <<aggregate>> {
+      -id: UUID
+      -targetType: String
+      -targetId: UUID
+      -reporterId: UUID
+      -reason: String
+      -status: String
+      -version: long
+      +decide(approved: boolean): void
+    }
+
+    class ModerationAction <<aggregate>> {
+      -id: UUID
+      -reportId: UUID
+      -moderatorId: UUID
+      -decision: String
+      -notes: String
+      -decidedAt: Instant
+    }
+  }
+
+  package "interfaces" {
+    interface ModerationQueueFacade <<facade>>
+    class ModerationController <<controller>>
+  }
+}
+
+' Relationships across Bounded Contexts via ACL Facades
+AccountsController --> ProfileCommandService
+AccountsController --> ProfileQueryService
+TrustLinksController --> ProfileCommandService
+CommutingController --> CommuteCommandService
+CommutingController --> CommuteQueryService
+CommunityController --> CommunityCommandService
+CommunityController --> CommunityQueryService
+CommunityController --> ProfileDirectoryFacade
+WellnessController --> WellnessCommandService
+WellnessController --> WellnessQueryService
+SubscriptionsController --> ProfileDirectoryFacade
+ModerationController --> CommunityTargetGovernanceFacade
+ProfileCommandService ..> SubscriptionAllowanceFacade : verifies contact allowance
+CommunityCommandService ..> CommuteVerificationFacade : verifies arrived commute
+CommunityCommandService ..> ModerationQueueFacade : queues service/risk for review
+CommuteCommandService ..> ProfileDirectoryFacade : resolves active trusted contacts
+
+@enduml
