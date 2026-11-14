@@ -3064,7 +3064,6 @@
         },
         "required": [
           "content",
-          "district",
           "title"
         ]
       },
